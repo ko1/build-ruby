@@ -8,53 +8,79 @@ require 'benchmark'
 require 'etc'
 
 class BuildRuby
+  BUILD_STEPS = %w{
+    checkout
+    autoconf
+    configure
+    build_up
+    build_miniruby
+    build_ruby
+    build_exts
+    build_all
+    build_install
+  }
+  TEST_STEPS = %w{
+    test_btest
+    test_all
+    test_rubyspec
+  }
+  CLEANUP_STEPS = %w{
+    cleanup_src
+    cleanup_build
+  }
+
   def initialize repository = nil,
                  target_name = nil,
                  repository_type: nil,
                  git_branch: nil,
                  svn_revision: nil,
-                 root_directory: "~/ruby",
+                 root_dir: "~/ruby",
+                 src_dir: nil,
+                 build_dir: nil,
+                 install_dir: nil,
+                 configure_opts: nil,
                  build_opts: nil,
                  test_opts: nil,
+                 no_parallel: false,
+                 incremental: false,
                  steps: nil,
                  logfile: nil
     #
     @REPOSITORY      = repository      || 'https://svn.ruby-lang.org/repos/ruby/trunk'
     @REPOSITORY_TYPE = repository_type || find_repository_type(@REPOSITORY)
-    @TARGET_NAME     = target_name     || File.basename(@REPOSITORY)
-
-    @SRC_DIR     = File.expand_path(File.join(root_directory, 'src'))
-    @BUILD_DIR   = File.expand_path(File.join(root_directory, 'build'))
-    @INSTALL_DIR = File.expand_path(File.join(root_directory, 'install'))
-    @TARGET_SRC_DIR = File.join(@SRC_DIR, @TARGET_NAME)
-    @TARGET_BUILD_DIR = File.join(@BUILD_DIR, @TARGET_NAME)
-    @TARGET_INSTALL_DIR = File.join(@INSTALL_DIR, @TARGET_NAME)
 
     @git_branch = git_branch
     @svn_revision = svn_revision
+    basename = File.basename(@REPOSITORY)
 
-    if Etc.respond_to? :nprocessors
-      pn = Etc.nprocessors
+    @TARGET_NAME = target_name ||
+                   case
+                   when @git_branch
+                     "#{basename}_#{@git_branch}"
+                   when @svn_revision
+                     "#{basename}_r#{@svn_revision}"
+                   else
+                     basename
+                   end
+
+    @SRC_DIR     = File.expand_path(File.join(root_dir, 'src'))
+    @BUILD_DIR   = File.expand_path(File.join(root_dir, 'build'))
+    @INSTALL_DIR = File.expand_path(File.join(root_dir, 'install'))
+    @TARGET_SRC_DIR     = File.join(@SRC_DIR,     src_dir     || @TARGET_NAME)
+    @TARGET_BUILD_DIR   = File.join(@BUILD_DIR,   build_dir   || @TARGET_NAME)
+    @TARGET_INSTALL_DIR = File.join(@INSTALL_DIR, install_dir || @TARGET_NAME)
+
+    if Etc.respond_to?(:nprocessors) && no_parallel == false
+      pn = Etc.nprocessors * 2
       build_opts ||= "-j#{pn}"
       test_opts  ||= "TESTS='-j#{pn}'"
     end
+    @configure_opts = configure_opts || ['--enable-shared']
     @build_opts = build_opts
     @test_opts = test_opts
+    @incremental = incremental
 
-    @steps = steps || %w{
-      checkout
-      autoconf
-      configure
-      build_up
-      build_miniruby
-      build_ruby
-      build_exts
-      build_all
-      build_install
-      test_btest
-      test_all
-      test_rubyspec
-    }
+    @steps = steps || BUILD_STEPS + TEST_STEPS
 
     logfile ||= "log.build-ruby.#{@TARGET_NAME}.#{Time.now.strftime('%Y%m%d-%H%M%S')}"
 
@@ -116,7 +142,11 @@ class BuildRuby
     Dir.chdir(@SRC_DIR){
       case @REPOSITORY_TYPE
       when :svn
-        cmd 'svn', 'checkout', @REPOSITORY, @TARGET_NAME
+        if @svn_revision
+          cmd 'svn', 'checkout', "-r#{@svn_revision}", @REPOSITORY, @TARGET_NAME
+        else
+          cmd 'svn', 'checkout', @REPOSITORY, @TARGET_NAME
+        end
       when :git
         if @git_branch
           cmd 'git', 'clone', '--depth', '1', '-b', @git_branch, '--single-branch', @REPOSITORY, @TARGET_NAME
@@ -143,24 +173,19 @@ class BuildRuby
     }
   end
 
-  def build
-    configure
-    build_up
-    build_all
-    build_install
-  end
-
   def configure
     builddir{
       unless File.exist? File.join(@TARGET_BUILD_DIR, 'Makefile')
-        cmd File.join(@TARGET_SRC_DIR, 'configure'), '--disable-install-doc', '--enable-shared', "--prefix=#{@TARGET_INSTALL_DIR}"
+        cmd File.join(@TARGET_SRC_DIR, 'configure'), "--prefix=#{@TARGET_INSTALL_DIR}", '--disable-install-doc', *@configure_opts
       end
     }
   end
 
   def build_up
     builddir{
-      cmd "make up #{@build_opts}", on_failure: :ignore
+      cmd "make update-download #{@build_opts}", on_failure: :ignore
+      cmd "make update-rubyspec #{@build_opts}", on_failure: :ignore if @steps.include?('test_rubyspec')
+      cmd "make update-src      #{@build_opts}", on_failure: :ignore unless @svn_revision
     }
   end
 
@@ -218,11 +243,20 @@ class BuildRuby
     }
   end
 
+  def cleanup_src
+    remove [:src]
+  end
+
+  def cleanup_build
+    remove [:build]
+  end
+
   def run
     @logger = Logger.new(@logfile)
     @logger.info self.inspect
     @failures = []
     err = nil
+    return unless @incremental || !File.exist?(File.join(@TARGET_INSTALL_DIR, 'bin/ruby'))
 
     tm = Benchmark.measure{
       Benchmark.bm(20){|x|
@@ -260,15 +294,26 @@ class BuildRuby
     end
   end
 
-  def remove
-    FileUtils.rm_rf(p @TARGET_SRC_DIR)
-    FileUtils.rm_rf(p @TARGET_BUILD_DIR)
-    FileUtils.rm_rf(p @TARGET_INSTALL_DIR)
+  def remove types
+    types.each{|type|
+      case type
+      when :all
+        FileUtils.rm_rf(p @TARGET_SRC_DIR)
+        FileUtils.rm_rf(p @TARGET_BUILD_DIR)
+        FileUtils.rm_rf(p @TARGET_INSTALL_DIR)
+      when :build
+        FileUtils.rm_rf(p @TARGET_BUILD_DIR)
+      when :install
+        FileUtils.rm_rf(p @TARGET_INSTALL_DIR)
+      when :src
+        FileUtils.rm_rf(p @TARGET_SRC_DIR)
+      end
+    }
   end
 end
 
 opts = {}
-mode = :build
+rm_types = nil
 
 opt = OptionParser.new
 opt.on('--repository_type=[TYPE]'){|type|
@@ -280,11 +325,23 @@ opt.on('-b', '--git_branch=[BRANCH_NAME]'){|b|
 opt.on('-r', '--svn_revision=[REV]'){|r|
   opts[:svn_revision] = r
 }
+opt.on('--configure_opts=[CONFIGURE_OPTS]'){|o|
+  opts[:configure_opts] = [o]
+}
 opt.on('--build_opts=[BUILD_OPTS]'){|o|
   opts[:build_opts] = o
 }
-opt.on('--root_directory=[ROOT_DIR]'){|dir|
-  opts[:root_directory] = dir
+opt.on('--root_dir=[ROOT_DIR]'){|dir|
+  opts[:root_dir] = dir
+}
+opt.on('--src_dir=[SRC_DIR]'){|dir|
+  opts[:src_dir] = dir
+}
+opt.on('--build_dir=[BUILD_DIR]'){|dir|
+  opts[:build_dir] = dir
+}
+opt.on('--install_dir=[INSTALL_DIR]'){|dir|
+  opts[:install_dir] = dir
 }
 opt.on('--test_opts=[TEST_OPTS]'){|o|
   opts[:test_opts] = o
@@ -295,33 +352,37 @@ opt.on('--steps=["STEP1 STEP2..."]'){|steps|
 opt.on('--logfile=[LOGFILE]'){|logfile|
   opts[:logfile] = logfile
 }
-opt.on('--rm'){
-  mode = :rm
+opt.on('--rm=[all|src|build|install]'){|types|
+  rm_types = types.split(/[\s,]+/).map{|e| e.to_sym}
 }
-opt.on('--install-only'){
-  opts[:steps] = %w{
-    checkout
-    autoconf
-    configure
-    build_up
-    build_miniruby
-    build_ruby
-    build_exts
-    build_all
-    build_install
-  }
+opt.on('--no-parallel'){
+  opts[:no_parallel] = true
+}
+opt.on('--incremental'){
+  opts[:incremental] = true
+}
+opt.on('--only-install'){
+  opts[:steps] = BuildRuby::BUILD_STEPS
+}
+opt.on('--only-install-cleanup'){
+  opts[:steps] = BuildRuby::BUILD_STEPS + BuildRuby::CLEANUP_STEPS
+}
+target_name = nil
+opt.on('--target_name=[TARGET_NAME]'){|t|
+  target_name = t
 }
 
 opt.parse!(ARGV)
+
 repository = ARGV.shift
-target_name = ARGV.shift
+target_name ||= ARGV.shift
+
 br = BuildRuby.new(repository, target_name, **opts)
 br.show_config
 
-case mode
-when :build
+if rm_types
+  br.remove rm_types
+else
   br.setup_dir
   br.run
-when :rm
-  br.remove
 end
