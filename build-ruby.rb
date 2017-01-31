@@ -353,7 +353,11 @@ opt.on('--logfile=[LOGFILE]'){|logfile|
   opts[:logfile] = logfile
 }
 opt.on('--rm=[all|src|build|install]'){|types|
-  rm_types = types.split(/[\s,]+/).map{|e| e.to_sym}
+  if types
+    rm_types = types.split(/[\s,]+/).map{|e| e.to_sym}
+  else
+    rm_types = [:all]
+  end
 }
 opt.on('--no-parallel'){
   opts[:no_parallel] = true
