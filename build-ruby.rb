@@ -352,6 +352,9 @@ opt.on('--steps=["STEP1 STEP2..."]'){|steps|
 opt.on('--logfile=[LOGFILE]'){|logfile|
   opts[:logfile] = logfile
 }
+opt.on('--clear'){
+  rm_types = [:all]
+}
 opt.on('--rm=[all|src|build|install]'){|types|
   if types
     rm_types = types.split(/[\s,]+/).map{|e| e.to_sym}
