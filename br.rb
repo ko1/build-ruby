@@ -5,7 +5,7 @@ cmd = ARGV.shift
 
 WORKING_DIR = File.expand_path(ENV['BUILD_RUBY_WORKING_DIR'] || "~/ruby")
 BUILD_RUBY_SCRIPT = File.join(File.dirname(__FILE__), 'build-ruby.rb')
-PAGER = EVN['PAGER'] || 'less'
+PAGER = ENV['PAGER'] || 'less'
 
 def build target
   target_file = File.expand_path(File.join(WORKING_DIR, "#{target}.br"))
