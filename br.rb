@@ -8,7 +8,7 @@ BUILD_RUBY_SCRIPT = File.join(File.dirname(__FILE__), 'build-ruby.rb')
 
 def build target
   target_file = File.expand_path(File.join(WORKING_DIR, "#{target}.br"))
-
+  opts = ''
   # opts by default
   opts << "--target_name=#{target}"
   logfile = File.join(WORKING_DIR, 'logs', "brlog.#{target}.#{Time.now.strftime('%Y%m%d-%H%M%S')}")
