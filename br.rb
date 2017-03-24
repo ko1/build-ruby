@@ -5,24 +5,25 @@ cmd = ARGV.shift
 
 WORKING_DIR = File.expand_path(ENV['BUILD_RUBY_WORKING_DIR'] || "~/ruby")
 BUILD_RUBY_SCRIPT = File.join(File.dirname(__FILE__), 'build-ruby.rb')
+PAGER = EVN['PAGER'] || 'less'
 
 def build target
   target_file = File.expand_path(File.join(WORKING_DIR, "#{target}.br"))
-  opts = ''
+  opts = []
   # opts by default
   opts << "--target_name=#{target}"
   logfile = File.join(WORKING_DIR, 'logs', "brlog.#{target}.#{Time.now.strftime('%Y%m%d-%H%M%S')}")
   opts << "--logfile=#{logfile}"
 
   # opts from config file
-  opts << open(target_file){|f|
-    f.readlines.map{|line| line.chomp}.join(' ')
+  opts.concat open(target_file){|f|
+    f.readlines.map{|line| line.chomp}
   }
 
   # opts from command line
-  opts << ARGV.join(' ')
+  opts << ARGV
 
-  system("ruby #{BUILD_RUBY_SCRIPT} #{opts}")
+  system("ruby #{BUILD_RUBY_SCRIPT} #{opts.join(' ')}")
   [$?, logfile]
 end
 
@@ -52,7 +53,10 @@ when 'list'
     puts File.basename(target_config, '.br')
   }
 when 'build'
-  build ARGV.shift || raise('build target is not provided')
+  r, logfile = build ARGV.shift || raise('build target is not provided')
+  unless r.success?
+    system("#{PAGER} #{logfile}")
+  end
 when 'build_all'
   target_configs{|target_config|
     build File.basename(target_config, '.br')
