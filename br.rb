@@ -11,8 +11,8 @@ cmd = ARGV.shift
 WORKING_DIR = File.expand_path(ENV['BUILD_RUBY_WORKING_DIR'] || "~/ruby")
 BUILD_RUBY_SCRIPT = File.join(File.dirname(__FILE__), 'build-ruby.rb')
 PAGER = ENV['PAGER'] || 'less'
-BR_LOOP_MINIMUM_DURATION = [ENV['BR_LOOP_MINIMUM_DURATION'].to_i, (60 * 3)].max
-BR_LOOP_TIMEOUT          = [ENV['BR_LOOP_TIMEOUT'].to_i, 3 * 60 * 60].min # 3 hours for default
+BR_LOOP_MINIMUM_DURATION = (ENV['BR_LOOP_MINIMUM_DURATION'] || (60 * 3)).to_i # 180 sec for default
+BR_LOOP_TIMEOUT          = (ENV['BR_LOOP_TIMEOUT'] || 3 * 60 * 60).to_i       # 3 hours for default
 
 def (DummyCollector = Object.new).<<(obj)
   # ignore
