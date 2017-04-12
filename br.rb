@@ -62,10 +62,10 @@ def build_loop target
     gist_url = r.success? ? nil : `gist #{logfile}`
     h = {
       name: target,
-      result: r.success? 'OK' : 'NG',
+      result: r.success? ? 'OK' : 'NG',
       detail_link: gist_url,
-      desc = results.join,
-      memo = Etc.uname.inspect,
+      desc: results.join,
+      memo: Etc.uname.inspect,
     }
     net = Net::HTTP.new('ci.rvm.jp', 80)
     p net.put('/results', URI.encode_www_form(h))
