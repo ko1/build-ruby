@@ -44,7 +44,8 @@ class BuildRuby
                  no_parallel: false,
                  incremental: false,
                  steps: nil,
-                 logfile: nil
+                 logfile: nil,
+                 quiet: false
     #
     @REPOSITORY      = repository      || 'https://svn.ruby-lang.org/repos/ruby/trunk'
     @REPOSITORY_TYPE = repository_type || find_repository_type(@REPOSITORY)
@@ -81,10 +82,10 @@ class BuildRuby
     @incremental = incremental
 
     @steps = steps || BUILD_STEPS + TEST_STEPS
+    @quiet = quiet
 
     logfile ||= "log.build-ruby.#{@TARGET_NAME}.#{Time.now.strftime('%Y%m%d-%H%M%S')}"
 
-    STDERR.puts "Logfile: #{logfile}"
     @logfile = logfile
   end
 
@@ -100,7 +101,7 @@ class BuildRuby
   end
 
   def show_config
-    pp self
+    pp self unless @quiet
   end
 
   def setup_dir
@@ -255,12 +256,14 @@ class BuildRuby
     @logger = Logger.new(@logfile)
     @logger.info self.inspect
     @failures = []
+
     err = nil
     return unless @incremental || !File.exist?(File.join(@TARGET_INSTALL_DIR, 'bin/ruby'))
 
-    tm = Benchmark.measure{
-      Benchmark.bm(20){|x|
-        @steps.each{|step|
+    STDERR.puts "Logfile: #{@logfile}" unless @quiet
+
+    do_steps = Proc.new{
+      @steps.each{|step|
           x.report(step){
             begin
               send(step)
@@ -270,14 +273,39 @@ class BuildRuby
           }
           break if err
         }
-      }
     }
-    puts "total: #{'%0.2f' % tm.real} sec"
+
+    if @quet
+      @steps.each{|step|
+        begin
+          send(step)
+        rescue => e
+          err = e
+        end
+      }
+    else
+      tm = Benchmark.measure{
+        Benchmark.bm(20){|x|
+          @steps.each{|step|
+            x.report(step){
+              begin
+                send(step)
+              rescue => e
+                err = e
+              end
+            }
+            break if err
+          }
+        }
+      }
+      puts "total: #{'%0.2f' % tm.real} sec" unless @quiet
+    end
 
     # check err
     case err
     when CmdFailure
       STDERR.puts err.message
+      STDERR.puts @logfile
       exit 1
     when nil
       # ignore
@@ -373,6 +401,9 @@ opt.on('--only-install'){
 }
 opt.on('--only-install-cleanup'){
   opts[:steps] = BuildRuby::BUILD_STEPS + BuildRuby::CLEANUP_STEPS
+}
+opt.on('-q', '--quiet'){
+  opts[:quiet] = true
 }
 target_name = nil
 opt.on('--target_name=[TARGET_NAME]'){|t|
