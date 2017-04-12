@@ -4,6 +4,7 @@ require 'timeout'
 require 'net/http'
 require 'uri'
 require 'etc'
+require 'socket'
 
 cmd = ARGV.shift
 
@@ -61,7 +62,7 @@ def build_loop target
     # send result
     gist_url = r.success? ? nil : `gist #{logfile}`
     h = {
-      name: target,
+      name: "#{target}@#{Socket.gethostname}",
       result: r.success? ? 'OK' : 'NG',
       detail_link: gist_url,
       desc: results.join,
