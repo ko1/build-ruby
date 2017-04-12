@@ -51,7 +51,7 @@ def build target, extra_opts: ARGV, result_collector: DummyCollector
 end
 
 def clean_all target
-  build target, extra_opts: '--rm=all'
+  build target, extra_opts: ['--rm=all']
 end
 
 def build_loop target
