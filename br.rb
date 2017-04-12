@@ -41,7 +41,7 @@ def build_loop target
     # send result
 
 
-`    # 60 sec break
+    # 60 sec break
     sleep_time = 60 - (Time.now.to_i - start.to_i)
     sleep sleep_time if sleep_time > 0
   }
