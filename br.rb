@@ -12,7 +12,7 @@ WORKING_DIR = File.expand_path(ENV['BUILD_RUBY_WORKING_DIR'] || "~/ruby")
 BUILD_RUBY_SCRIPT = File.join(File.dirname(__FILE__), 'build-ruby.rb')
 PAGER = ENV['PAGER'] || 'less'
 BR_LOOP_MINIMUM_DURATION = [ENV['BR_LOOP_MINIMUM_DURATION'].to_i, (60 * 3)].max
-BR_LOOP_TIMEOUT          = [ENV['BR_LOOP_TIMEOUT'].to_i, 3 * 60 * 60].min
+BR_LOOP_TIMEOUT          = [ENV['BR_LOOP_TIMEOUT'].to_i, 3 * 60 * 60].min # 3 hours for default
 
 def (DummyCollector = Object.new).<<(obj)
   # ignore
@@ -67,6 +67,7 @@ def build_loop target
       detail_link: gist_url,
       desc: results.join,
       memo: Etc.uname.inspect,
+      timeout: BR_LOOP_TIMEOUT,
     }
     net = Net::HTTP.new('ci.rvm.jp', 80)
     p net.put('/results', URI.encode_www_form(h))

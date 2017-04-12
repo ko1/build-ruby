@@ -3,7 +3,7 @@ require 'yaml/store'
 
 # load db
 MEM_DB = Hash.new{|h, k| h[k] = []}
-Dir.glob('db/*'){|db_file|
+Dir.glob(File.join(__dir__, 'db', '*')){|db_file|
   data = []
   db = YAML::Store.new(db_file)
   db.transaction{
@@ -19,7 +19,7 @@ def db_file name
 end
 
 def db_write name, **opts
-  raise "unsupported name: #{name}" if !name || name.empty? || /[^A-z0-9_\-@]/ =~ name
+  raise "unsupported name: #{name}" if !name || name.empty? || /[^A-z0-9\-@]/ =~ name
   now = Time.now.to_i
   MEM_DB[name] << [now, opts]
   db = YAML::Store.new(db_file(name))
@@ -63,6 +63,7 @@ put '/results' do
   name = par:name
   opts = params_set(:result, :desc, :detail_link, :memo)
   db_write(name, **opts)
+  alert_setup(name, par:timeout)
   'OK'
 end
 
@@ -82,7 +83,7 @@ end
 ALERT_TO = %w(ko1c-failure@atdot.net)
 
 def otps2msg name, opts
-  msg = <<EOS
+<<EOS
 Alert on #{name}
 rsult : #{opts[:result]}
 detail: #{opts[:detail_link]}
@@ -103,24 +104,35 @@ def alert name, result, msg
   }
 end
 
+def alert_setup name, timeout_str
+  timeout = (timeout_str || (60 * 60 * 3)).to_i
+  WATCH_LIST[name] = {timeout: timeout, alerted: false}
+end
+
 # timeout alert
-
-WATCH_RESULTS = {
-  
-}
-
 Thread.abort_on_exception = true
 
-unless WATCH_RESULTS.empty?
-  Thread.new{
-    loop{
-      WATCH_RESULTS.each{|name, timeout_sec|
-        sec = Time.now.to_i - db_last_update(name).to_i
-        if sec > timeout_sec
+WATCH_LIST = {
+  # name => {timeout: sec, alerted: ...}
+}
+
+Thread.new{
+  loop{
+    WATCH_LIST.each{|name, cfg|
+      sec = Time.now.to_i - db_last_update(name).to_i
+      if sec > cfg[:timeout]
+        if cfg[:alerted]
+          if sec > cfg[:alerted]
+            alert name 'timeout (continue)', "No response from #{name} (#{sec} sec)"
+          end
+        else
           alert name, 'timeout', "No response from #{name} (#{sec} sec)"
+          cfg[:alerted] = Time.now.to_i + (60 * 60) # next alert is 1 hour later
         end
-        sleep 60
-      }
+      else
+        cfg[:alerted] = false
+      end
     }
+    sleep 60
   }
-end
+}
