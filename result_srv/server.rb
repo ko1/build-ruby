@@ -96,7 +96,7 @@ end
 
 def alert name, result, msg
   cmd = "mail -s 'failure alert on #{name} (#{result})' #{ALERT_TO.join(' ')}"
-  logger.info cmd
+  puts cmd
   IO.popen(cmd, 'r+'){|io|
     io.puts msg
     io.close_write
