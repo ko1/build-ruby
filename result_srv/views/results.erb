@@ -1,0 +1,21 @@
+
+<h1>Latest results</h1>
+
+<table>
+  <% MEM_DB.each{|name, vs| %>
+    <% t, opts = *vs.last %>
+    <% next unless t %>
+    <tr>
+      <td> <a href='/results/<%=h name %>'><%=h name %></a></td>
+      <td> <a href='/results/<%=h name %>/<%=h t %>'><%=h Time.at(t) %></a></td>
+      <td>
+      <% if opts[:detail_link] %>
+	<a href='<%=h opts[:detail_link]%>'><%=h opts[:result] %></a>
+      <% else %>
+	<%=h opts[:result] %>
+      <% end %>
+      </td>
+      <td>
+    </tr>
+  <% } %>
+</table>
