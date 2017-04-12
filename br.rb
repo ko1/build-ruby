@@ -54,7 +54,7 @@ def build_loop target
     # send result
 
     # 60 sec break
-    sleep_time = BR_MINIMUM_DURATION - (Time.now.to_i - start.to_i)
+    sleep_time = BR_LOOP_MINIMUM_DURATION - (Time.now.to_i - start.to_i)
     if sleep_time > 0
       puts "sleep: #{sleep_time}"
       sleep sleep_time
