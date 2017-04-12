@@ -6,6 +6,7 @@ cmd = ARGV.shift
 WORKING_DIR = File.expand_path(ENV['BUILD_RUBY_WORKING_DIR'] || "~/ruby")
 BUILD_RUBY_SCRIPT = File.join(File.dirname(__FILE__), 'build-ruby.rb')
 PAGER = ENV['PAGER'] || 'less'
+BR_MINIMUM_DURATION = [ENV['BR_MINIMUM_DURATION'].to_i, (60 * 3)].max
 
 def (DummyOutCollector = Object.new).<<(obj)
   # ignore
@@ -28,7 +29,10 @@ def build target, out_collector = DummyOutCollector
   opts << ARGV
 
   IO.popen("ruby #{BUILD_RUBY_SCRIPT} #{opts.join(' ')}"){|io|
-    puts (out_collector << io.gets)
+    while line = io.gets
+      out_collector << line
+      puts line
+    end
   }
   [$?, logfile]
 end
@@ -36,14 +40,17 @@ end
 def build_loop target
   loop{
     start = Time.now
-    _r, _logfile = build target
-
+    _r, _logfile = build target, results = []
+    p _r
     # send result
-
+    # TODO
 
     # 60 sec break
-    sleep_time = 60 - (Time.now.to_i - start.to_i)
-    sleep sleep_time if sleep_time > 0
+    sleep_time = BR_MINIMUM_DURATION - (Time.now.to_i - start.to_i)
+    if sleep_time > 0
+      puts "sleep: #{sleep_time}"
+      sleep sleep_time
+    end
   }
 end
 
