@@ -46,7 +46,7 @@ class BuildRuby
                  steps: nil,
                  logfile: nil,
                  quiet: false,
-                 gist: false,
+                 gist: false
     #
     @REPOSITORY      = repository      || 'https://svn.ruby-lang.org/repos/ruby/trunk'
     @REPOSITORY_TYPE = repository_type || find_repository_type(@REPOSITORY)
