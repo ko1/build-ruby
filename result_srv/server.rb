@@ -63,7 +63,7 @@ put '/results' do
   name = par:name
   opts = params_set(:result, :desc, :detail_link, :memo)
   db_write(name, **opts)
-  alert_setup(name, par:timeout)
+  alert_setup(name, par(:timeout))
   'OK'
 end
 
