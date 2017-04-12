@@ -71,7 +71,7 @@ def build_loop target
     p net.put('/results', URI.encode_www_form(h))
 
     # cleanup all
-    unless _r.success?
+    unless r.success?
       clean_all
     end
 
