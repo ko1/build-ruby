@@ -36,7 +36,7 @@ end
 def build_loop target
   loop{
     start = Time.now
-    r, logfile = build target
+    _r, _logfile = build target
 
     # send result
 
@@ -73,7 +73,7 @@ when 'list'
     puts File.basename(target_config, '.br')
   }
 when 'build'
-  r, logfile, build ARGV.shift || raise('build target is not provided')
+  r, logfile = build ARGV.shift || raise('build target is not provided')
   unless r.success?
     system("#{PAGER} #{logfile}")
   end
