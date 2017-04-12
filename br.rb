@@ -1,6 +1,9 @@
 
 require 'optparse'
 require 'timeout'
+require 'net/http'
+require 'uri'
+require 'etc'
 
 cmd = ARGV.shift
 
@@ -10,11 +13,11 @@ PAGER = ENV['PAGER'] || 'less'
 BR_LOOP_MINIMUM_DURATION = [ENV['BR_LOOP_MINIMUM_DURATION'].to_i, (60 * 3)].max
 BR_LOOP_TIMEOUT          = [ENV['BR_LOOP_TIMEOUT'].to_i, 3 * 60 * 60].min
 
-def (DummyOutCollector = Object.new).<<(obj)
+def (DummyCollector = Object.new).<<(obj)
   # ignore
 end
 
-def build target, out_collector = DummyOutCollector
+def build target, extra_opts: ARGV, result_collector: DummyCollector
   target_file = File.expand_path(File.join(WORKING_DIR, "#{target}.br"))
   opts = []
   # opts by default
@@ -28,12 +31,13 @@ def build target, out_collector = DummyOutCollector
   }
 
   # opts from command line
-  opts << ARGV
+  opts.concat extra_opts
+
   IO.popen("ruby #{BUILD_RUBY_SCRIPT} #{opts.join(' ')}"){|io|
     Timeout.timeout(BR_LOOP_TIMEOUT) do
       begin
         while line = io.gets
-          out_collector << line
+          result_collector << line
           puts line
         end
       rescue Timeout::Error
@@ -45,13 +49,31 @@ def build target, out_collector = DummyOutCollector
   [$?, logfile]
 end
 
+def clean_all target
+  build target, extra_opts: '--rm=all'
+end
+
 def build_loop target
   loop{
     start = Time.now
-    _r, _logfile = build target, results = []
-    p _r
-
+    r, logfile = build target, result_collector: results = []
+    p r
     # send result
+    gist_url = r.success? ? nil : `gist #{logfile}`
+    h = {
+      name: target,
+      result: r.success? 'OK' : 'NG',
+      detail_link: gist_url,
+      desc = results.join,
+      memo = Etc.uname.inspect,
+    }
+    net = Net::HTTP.new('ci.rvm.jp', 80)
+    p net.put('/results', URI.encode_www_form(h))
+
+    # cleanup all
+    unless _r.success?
+      clean_all
+    end
 
     # 60 sec break
     sleep_time = BR_LOOP_MINIMUM_DURATION - (Time.now.to_i - start.to_i)
