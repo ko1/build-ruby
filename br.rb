@@ -58,7 +58,9 @@ when 'build'
     system("#{PAGER} #{logfile}")
   end
 when 'build_all'
+  pattern = ARGV.shift if ARGV[0] && ARGV[0] !~ /--/
   target_configs{|target_config|
+    next if pattern && Regexp.compile(pattern) !~ target_config
     build File.basename(target_config, '.br')
   }
 when 'run'
