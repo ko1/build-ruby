@@ -19,6 +19,19 @@ class BuildRuby
     build_all
     build_install
   }
+  CHECK_STEPS = %w{
+    checkout
+    autoconf
+    configure
+    build_up
+    build_miniruby
+    build_ruby
+    build_exts
+    build_all
+    build_install
+    test_btest
+    test_all
+  }
   TEST_STEPS = %w{
     test_btest
     test_all
@@ -405,6 +418,9 @@ opt.on('--incremental'){
 }
 opt.on('--only-install'){
   opts[:steps] = BuildRuby::BUILD_STEPS
+}
+opt.on('--only-check'){
+  opts[:steps] = BuildRuby::CHECK_STEPS
 }
 opt.on('--only-install-cleanup'){
   opts[:steps] = BuildRuby::BUILD_STEPS + BuildRuby::CLEANUP_STEPS
