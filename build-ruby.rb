@@ -45,7 +45,8 @@ class BuildRuby
                  incremental: false,
                  steps: nil,
                  logfile: nil,
-                 quiet: false
+                 quiet: false,
+                 gist: false,
     #
     @REPOSITORY      = repository      || 'https://svn.ruby-lang.org/repos/ruby/trunk'
     @REPOSITORY_TYPE = repository_type || find_repository_type(@REPOSITORY)
@@ -83,6 +84,7 @@ class BuildRuby
 
     @steps = steps || BUILD_STEPS + TEST_STEPS
     @quiet = quiet
+    @gist = gist
 
     logfile ||= "log.build-ruby.#{@TARGET_NAME}.#{Time.now.strftime('%Y%m%d-%H%M%S')}"
 
@@ -305,8 +307,7 @@ class BuildRuby
     case err
     when CmdFailure
       STDERR.puts err.message
-      STDERR.puts @logfile
-      exit 1
+      exit_failure
     when nil
       # ignore
     else
@@ -318,8 +319,14 @@ class BuildRuby
       @failures.each{|f|
         STDERR.puts f
       }
-      exit 1
+      exit_failure
     end
+  end
+
+  def exit_failure
+    STDERR.puts @logfile
+    system("gist #{@logfile}") if @gist
+    exit 1
   end
 
   def remove types
@@ -404,6 +411,9 @@ opt.on('--only-install-cleanup'){
 }
 opt.on('-q', '--quiet'){
   opts[:quiet] = true
+}
+opt.on('--gist'){
+  opts[:gist] = true
 }
 target_name = nil
 opt.on('--target_name=[TARGET_NAME]'){|t|
