@@ -7,7 +7,11 @@ WORKING_DIR = File.expand_path(ENV['BUILD_RUBY_WORKING_DIR'] || "~/ruby")
 BUILD_RUBY_SCRIPT = File.join(File.dirname(__FILE__), 'build-ruby.rb')
 PAGER = ENV['PAGER'] || 'less'
 
-def build target
+def (DummyOutCollector = Object.new).<<(obj)
+  # ignore
+end
+
+def build target, out_collector = DummyOutCollector
   target_file = File.expand_path(File.join(WORKING_DIR, "#{target}.br"))
   opts = []
   # opts by default
@@ -23,8 +27,24 @@ def build target
   # opts from command line
   opts << ARGV
 
-  system("ruby #{BUILD_RUBY_SCRIPT} #{opts.join(' ')}")
+  IO.popen("ruby #{BUILD_RUBY_SCRIPT} #{opts.join(' ')}"){|io|
+    puts (out_collector << io.gets)
+  }
   [$?, logfile]
+end
+
+def build_loop target
+  loop{
+    start = Time.now
+    r, logfile = build target
+
+    # send result
+
+
+`    # 60 sec break
+    sleep_time = 60 - (Time.now.to_i - start.to_i)
+    sleep sleep_time if sleep_time > 0
+  }
 end
 
 def target_configs
@@ -53,10 +73,12 @@ when 'list'
     puts File.basename(target_config, '.br')
   }
 when 'build'
-  r, logfile = build ARGV.shift || raise('build target is not provided')
+  r, logfile, build ARGV.shift || raise('build target is not provided')
   unless r.success?
     system("#{PAGER} #{logfile}")
   end
+when 'build_loop'
+  build_loop ARGV.shift || raise('build target is not provided')
 when 'build_all'
   pattern = ARGV.shift if ARGV[0] && ARGV[0] !~ /--/
   target_configs{|target_config|
