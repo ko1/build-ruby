@@ -73,7 +73,7 @@ def build_loop target
 
     # cleanup all
     unless r.success?
-      clean_all
+      clean_all target
     end
 
     # 60 sec break
