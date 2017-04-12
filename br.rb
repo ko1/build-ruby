@@ -1,12 +1,14 @@
 
 require 'optparse'
+require 'timeout'
 
 cmd = ARGV.shift
 
 WORKING_DIR = File.expand_path(ENV['BUILD_RUBY_WORKING_DIR'] || "~/ruby")
 BUILD_RUBY_SCRIPT = File.join(File.dirname(__FILE__), 'build-ruby.rb')
 PAGER = ENV['PAGER'] || 'less'
-BR_MINIMUM_DURATION = [ENV['BR_MINIMUM_DURATION'].to_i, (60 * 3)].max
+BR_LOOP_MINIMUM_DURATION = [ENV['BR_LOOP_MINIMUM_DURATION'].to_i, (60 * 3)].max
+BR_LOOP_TIMEOUT          = [ENV['BR_LOOP_TIMEOUT'].to_i, 3 * 60 * 60].min
 
 def (DummyOutCollector = Object.new).<<(obj)
   # ignore
@@ -27,11 +29,17 @@ def build target, out_collector = DummyOutCollector
 
   # opts from command line
   opts << ARGV
-
   IO.popen("ruby #{BUILD_RUBY_SCRIPT} #{opts.join(' ')}"){|io|
-    while line = io.gets
-      out_collector << line
-      puts line
+    Timeout.timeout(BR_LOOP_TIMEOUT) do
+      begin
+        while line = io.gets
+          out_collector << line
+          puts line
+        end
+      rescue Timeout::Error
+        system("kill -9 #{io.pid}")
+        sleep 1
+      end
     end
   }
   [$?, logfile]
@@ -42,8 +50,8 @@ def build_loop target
     start = Time.now
     _r, _logfile = build target, results = []
     p _r
+
     # send result
-    # TODO
 
     # 60 sec break
     sleep_time = BR_MINIMUM_DURATION - (Time.now.to_i - start.to_i)
