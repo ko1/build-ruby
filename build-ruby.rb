@@ -15,7 +15,6 @@ class BuildRuby
     build_up
     build_miniruby
     build_ruby
-    build_exts
     build_all
     build_install
   }
@@ -124,7 +123,7 @@ class BuildRuby
 
   def cmd *args, on_failure: :raise
     cmd_str = args.join(' ')
-    @logger.info cmd_str
+    @logger.info "$$$ #{cmd_str}"
     IO.popen(cmd_str, 'r+', err: [:child, :out]){|io|
       io.each_line{|line|
         @logger.info line.chomp
