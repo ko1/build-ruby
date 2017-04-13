@@ -268,7 +268,6 @@ class BuildRuby
   end
 
   def run
-    Process.setpgid(0, 0) # make new process group
     @logger = Logger.new(@logfile)
     @logger.info self.inspect
     @failures = []
