@@ -34,18 +34,16 @@ def build target, extra_opts: ARGV, result_collector: DummyCollector, build_time
 
   begin
     IO.popen("ruby #{BUILD_RUBY_SCRIPT} #{opts.join(' ')}", 'r', pgroug: 0){|io|
-      # set new process group id for forked process
-
-      Timeout.timeout(build_timeout) do
-        begin
+      begin
+        Timeout.timeout(build_timeout) do
           while line = io.gets
             result_collector << line
             puts line
           end
-        rescue Timeout::Error
-          Process.kill(:KILL, -io.pid) # kill process group
-          sleep 1
         end
+      rescue Timeout::Error
+        Process.kill(:KILL, -io.pid) # kill process group
+        sleep 1
       end
     }
   rescue SystemCallError => e
