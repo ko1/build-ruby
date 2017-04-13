@@ -33,9 +33,8 @@ def build target, extra_opts: ARGV, result_collector: DummyCollector, build_time
   opts.concat extra_opts
 
   begin
-    IO.popen("ruby #{BUILD_RUBY_SCRIPT} #{opts.join(' ')}"){|io|
+    IO.popen("ruby #{BUILD_RUBY_SCRIPT} #{opts.join(' ')}", 'r', pgroug: 0){|io|
       # set new process group id for forked process
-      Process.setpgid(io.pid, io.pid)
 
       Timeout.timeout(build_timeout) do
         begin
