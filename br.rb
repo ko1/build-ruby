@@ -76,6 +76,7 @@ def build_loop target
       desc: results.join,
       memo: Etc.uname.inspect,
       timeout: build_timeout,
+      to: alert_to,
     }
     net = Net::HTTP.new('ci.rvm.jp', 80)
     p net.put('/results', URI.encode_www_form(h))
