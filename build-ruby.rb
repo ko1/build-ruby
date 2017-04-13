@@ -19,21 +19,9 @@ class BuildRuby
     build_all
     build_install
   }
-  CHECK_STEPS = %w{
-    checkout
-    autoconf
-    configure
-    build_up
-    build_miniruby
-    build_ruby
-    build_exts
-    build_all
-    build_install
-    test_btest
-    test_all
-  }
   TEST_STEPS = %w{
     test_btest
+    test_basic
     test_all
     test_rubyspec
   }
@@ -56,7 +44,8 @@ class BuildRuby
                  test_opts: nil,
                  no_parallel: false,
                  incremental: false,
-                 steps: nil,
+                 steps: BUILD_STEPS + TEST_STEPS,
+                 exclude_steps: [],
                  logfile: nil,
                  quiet: false,
                  gist: false
@@ -95,7 +84,11 @@ class BuildRuby
     @test_opts = test_opts
     @incremental = incremental
 
-    @steps = steps || BUILD_STEPS + TEST_STEPS
+    exclude_steps.each{|step|
+      steps.delete(step)
+    }
+
+    @steps = steps
     @quiet = quiet
     @gist = gist
 
@@ -243,19 +236,25 @@ class BuildRuby
 
   def test_btest
     builddir{
-      cmd "make btest #{@test_opts}", on_failure: :skip
+      cmd "make yes-btest #{@test_opts}", on_failure: :skip
+    }
+  end
+
+  def test_basic
+    builddir{
+      cmd "make yes-test-basic #{@test_opts}", on_failure: :skip
     }
   end
 
   def test_all
     builddir{
-      cmd "make test-all #{@test_opts}", on_failure: :skip
+      cmd "make yes-test-all #{@test_opts}", on_failure: :skip
     }
   end
 
   def test_rubyspec
     builddir{
-      cmd "make test-rubyspec #{@test_opts}", on_failure: :skip
+      cmd "make yes-test-rubyspec #{@test_opts}", on_failure: :skip
     }
   end
 
@@ -397,6 +396,9 @@ opt.on('--test_opts=[TEST_OPTS]'){|o|
 opt.on('--steps=["STEP1 STEP2..."]'){|steps|
   opts[:steps] = steps.split(/\s+/)
 }
+opt.on('--exclude-steps=["STEP1 STEP2..."]'){|steps|
+  opts[:exclude_steps] = steps.split(/\s+/)
+}
 opt.on('--logfile=[LOGFILE]'){|logfile|
   opts[:logfile] = logfile
 }
@@ -418,9 +420,6 @@ opt.on('--incremental'){
 }
 opt.on('--only-install'){
   opts[:steps] = BuildRuby::BUILD_STEPS
-}
-opt.on('--only-check'){
-  opts[:steps] = BuildRuby::CHECK_STEPS
 }
 opt.on('--only-install-cleanup'){
   opts[:steps] = BuildRuby::BUILD_STEPS + BuildRuby::CLEANUP_STEPS
