@@ -11,14 +11,12 @@ cmd = ARGV.shift
 WORKING_DIR = File.expand_path(ENV['BUILD_RUBY_WORKING_DIR'] || "~/ruby")
 BUILD_RUBY_SCRIPT = File.join(File.dirname(__FILE__), 'build-ruby.rb')
 PAGER = ENV['PAGER'] || 'less'
-BR_LOOP_MINIMUM_DURATION = (ENV['BR_LOOP_MINIMUM_DURATION'] || (60 * 3)).to_i # 180 sec for default
-BR_LOOP_TIMEOUT          = (ENV['BR_LOOP_TIMEOUT'] || 3 * 60 * 60).to_i       # 3 hours for default
 
 def (DummyCollector = Object.new).<<(obj)
   # ignore
 end
 
-def build target, extra_opts: ARGV, result_collector: DummyCollector
+def build target, extra_opts: ARGV, result_collector: DummyCollector, build_timeout: (60 * 60 * 3) # 3 hours
   target_file = File.expand_path(File.join(WORKING_DIR, "#{target}.br"))
   opts = []
   # opts by default
@@ -36,7 +34,7 @@ def build target, extra_opts: ARGV, result_collector: DummyCollector
 
   begin
     IO.popen("ruby #{BUILD_RUBY_SCRIPT} #{opts.join(' ')}"){|io|
-      Timeout.timeout(BR_LOOP_TIMEOUT) do
+      Timeout.timeout(build_timeout) do
         begin
           while line = io.gets
             result_collector << line
@@ -61,9 +59,13 @@ def clean_all target
 end
 
 def build_loop target
+  loop_dur      = (ENV['BR_LOOP_MINIMUM_DURATION'] || (60 * 3)).to_i # 180 sec for default
+  build_timeout = (ENV['BR_BUILD_TIMEOUT'] || 3 * 60 * 60).to_i      # 3 hours for default
+  alert_to      = (ENV['BR_ALERT_TO'] || 'ko1c-failure@atdot.net')
+
   loop{
     start = Time.now
-    r, logfile = build target, result_collector: results = []
+    r, logfile = build target, result_collector: results = [], build_timeout: build_timeout
     p r
     # send result
     gist_url = r.success? ? nil : `gist #{logfile}`
@@ -73,7 +75,7 @@ def build_loop target
       detail_link: gist_url,
       desc: results.join,
       memo: Etc.uname.inspect,
-      timeout: BR_LOOP_TIMEOUT,
+      timeout: build_timeout,
     }
     net = Net::HTTP.new('ci.rvm.jp', 80)
     p net.put('/results', URI.encode_www_form(h))
@@ -84,7 +86,7 @@ def build_loop target
     end
 
     # 60 sec break
-    sleep_time = BR_LOOP_MINIMUM_DURATION - (Time.now.to_i - start.to_i)
+    sleep_time = loop_dur - (Time.now.to_i - start.to_i)
     if sleep_time > 0
       puts "sleep: #{sleep_time}"
       sleep sleep_time
