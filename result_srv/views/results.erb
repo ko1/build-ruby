@@ -16,7 +16,7 @@
       <% end %>
       </td>
       <td>
-	<% if next_alert_time = WATCH_LIST.dig(:name, :alerted) %>
+	<% if next_alert_time = WATCH_LIST.dig(name, :alerted) %>
 	timeout (next alert: <%= Time.at(next_alert_time) %>)
         <% end %>
       </td>
