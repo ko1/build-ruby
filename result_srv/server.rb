@@ -124,10 +124,11 @@ Thread.new{
         if cfg[:alerted]
           if sec > cfg[:alerted]
             alert name 'timeout (continue)', "No response from #{name} (#{sec} sec)"
+            cfg[:alerted] = sec + (60 * 60) # next alert is 1 hour later
           end
         else
           alert name, 'timeout', "No response from #{name} (#{sec} sec)"
-          cfg[:alerted] = Time.now.to_i + (60 * 60) # next alert is 1 hour later
+          cfg[:alerted] = sec + (60 * 60) # next alert is 1 hour later
         end
       else
         cfg[:alerted] = false
