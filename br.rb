@@ -33,7 +33,7 @@ def build target, extra_opts: ARGV, result_collector: DummyCollector, build_time
   opts.concat extra_opts
 
   begin
-    IO.popen("ruby #{BUILD_RUBY_SCRIPT} #{opts.join(' ')}", 'r', pgroug: 0){|io|
+    IO.popen("ruby #{BUILD_RUBY_SCRIPT} #{opts.join(' ')}", 'r', pgroup: 0){|io|
       begin
         Timeout.timeout(build_timeout) do
           while line = io.gets
