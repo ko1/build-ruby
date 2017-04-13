@@ -62,8 +62,8 @@ end
 put '/results' do
   name = par:name
   opts = params_set(:result, :desc, :detail_link, :memo)
+  alert_setup(name, par(:timeout), par(:to))
   db_write(name, **opts)
-  alert_setup(name, par(:timeout))
   'OK'
 end
 
@@ -80,8 +80,6 @@ get '/results/:name/:time' do |name, time|
 end
 
 # alert
-ALERT_TO = %w(ko1c-failure@atdot.net)
-
 def otps2msg name, opts
 <<EOS
 Alert on #{name}
@@ -95,7 +93,8 @@ EOS
 end
 
 def alert name, result, msg
-  cmd = "mail -s 'failure alert on #{name} (#{result})' #{ALERT_TO.join(' ')}"
+  to = WATCH_LIST.dig(:name, :to) || %w(ko1c-failure@atdot.net)
+  cmd = "mail -s 'failure alert on #{name} (#{result})' #{to.join(' ')}"
   puts cmd
   IO.popen(cmd, 'r+'){|io|
     io.puts msg
@@ -104,16 +103,19 @@ def alert name, result, msg
   }
 end
 
-def alert_setup name, timeout_str
+def alert_setup name, timeout_str, to
   timeout = (timeout_str || (60 * 60 * 3)).to_i
-  WATCH_LIST[name] = {timeout: timeout, alerted: false}
+  to = to.split(/[, ]+/) if to
+
+  WATCH_LIST[name] = {timeout: timeout, alerted: false, to: to}
 end
 
 # timeout alert
 Thread.abort_on_exception = true
 
 WATCH_LIST = {
-  # name => {timeout: sec, alerted: ...}
+  # name => {timeout: sec, alerted: ...,
+  #          to: [...]}
 }
 
 Thread.new{
