@@ -41,7 +41,7 @@ def build target, extra_opts: ARGV, result_collector: DummyCollector, build_time
             puts line
           end
         end
-      rescue Timeout::Error
+      rescue Interrupt, Timeout::Error
         Process.kill(:KILL, -io.pid) # kill process group
         sleep 1
       end
