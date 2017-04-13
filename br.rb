@@ -34,19 +34,25 @@ def build target, extra_opts: ARGV, result_collector: DummyCollector
   # opts from command line
   opts.concat extra_opts
 
-  IO.popen("ruby #{BUILD_RUBY_SCRIPT} #{opts.join(' ')}"){|io|
-    Timeout.timeout(BR_LOOP_TIMEOUT) do
-      begin
-        while line = io.gets
-          result_collector << line
-          puts line
+  begin
+    IO.popen("ruby #{BUILD_RUBY_SCRIPT} #{opts.join(' ')}"){|io|
+      Timeout.timeout(BR_LOOP_TIMEOUT) do
+        begin
+          while line = io.gets
+            result_collector << line
+            puts line
+          end
+        rescue Timeout::Error
+          Process.kill(:KILL, -io.pid) # kill process group
+          sleep 1
         end
-      rescue Timeout::Error
-        system("kill -9 #{io.pid}")
-        sleep 1
       end
-    end
-  }
+    }
+  rescue SystemCallError => e
+    line = "#{e.message}"
+    result_collector << line
+    puts line
+  end
   [$?, logfile]
 end
 
