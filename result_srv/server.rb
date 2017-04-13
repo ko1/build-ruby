@@ -3,7 +3,18 @@ require 'yaml/store'
 
 # load db
 MEM_DB = Hash.new{|h, k| h[k] = []}
-Dir.glob(File.join(__dir__, 'db', '*')){|db_file|
+
+def db_file_name name
+  File.join(__dir__, 'db', name)
+end
+
+def db_files
+  Dir.glob(File.join(__dir__, 'db', '*')).sort.each{|db_file|
+    yield db_file
+  }
+end
+
+db_files{|db_file|
   data = []
   db = YAML::Store.new(db_file)
   db.transaction{
@@ -14,15 +25,11 @@ Dir.glob(File.join(__dir__, 'db', '*')){|db_file|
   MEM_DB[File.basename(db_file)] = data
 }
 
-def db_file name
-  File.join('db', name)
-end
-
 def db_write name, **opts
   raise "unsupported name: #{name}" if !name || name.empty? || /[^A-z0-9\-@]/ =~ name
   now = Time.now.to_i
   MEM_DB[name] << [now, opts]
-  db = YAML::Store.new(db_file(name))
+  db = YAML::Store.new(db_file_name(name))
   db.transaction{
     db[now] = opts
   }
@@ -30,7 +37,7 @@ def db_write name, **opts
 end
 
 def db_last_update name
-  File.mtime(db_file(name))
+  File.mtime(db_file_name(name))
 end
 
 # utils
