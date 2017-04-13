@@ -104,7 +104,7 @@ def alert name, result, msg
   cmd = "mail -s 'failure alert on #{name} (#{result})' #{to.join(' ')}"
   puts cmd
   IO.popen(cmd, 'r+'){|io|
-    io.puts msg
+    io.puts msg + "-- \nhttp://ci.rvm.jp/"
     io.close_write
     puts io.read
   }
