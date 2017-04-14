@@ -100,8 +100,8 @@ EOS
 end
 
 def alert name, result, msg
-  to = WATCH_LIST.dig(:name, :to) || %w(ko1c-failure@atdot.net)
-  cmd = "mail -s 'failure alert on #{name} (#{result})' #{to.join(' ')}"
+  to = WATCH_LIST.dig(name, :to) || %w(ruby-alert@quickml.atdot.net)
+  cmd = "mail -s 'failure alert on #{name} -aFrom:ko1c-failure@atdot.net (#{result})' #{to.join(' ')}"
   puts cmd
   IO.popen(cmd, 'r+'){|io|
     io.puts msg + "-- \nhttp://ci.rvm.jp/"
