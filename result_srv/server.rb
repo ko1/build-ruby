@@ -26,6 +26,7 @@ db_files{|db_file|
 }
 
 def db_write name, **opts
+  p opts
   raise "unsupported name: #{name}" if !name || name.empty? || /[^A-z0-9\-@]/ =~ name
   now = Time.now.to_i
   MEM_DB[name] << [now, opts]
@@ -104,7 +105,7 @@ def alert name, result, msg
   cmd = "mail -s 'failure alert on #{name} -aFrom:ko1c-failure@atdot.net (#{result})' #{to.join(' ')}"
   puts cmd
   IO.popen(cmd, 'r+'){|io|
-    io.puts msg + "-- \nhttp://ci.rvm.jp/"
+    io.puts msg + "\n\n-- \nhttp://ci.rvm.jp/"
     io.close_write
     puts io.read
   }
