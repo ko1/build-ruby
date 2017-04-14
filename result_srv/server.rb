@@ -26,7 +26,7 @@ db_files{|db_file|
 }
 
 def db_write name, **opts
-  p opts
+  p [name, opts[:result]]
   raise "unsupported name: #{name}" if !name || name.empty? || /[^A-z0-9\-@]/ =~ name
   now = Time.now.to_i
   MEM_DB[name] << [now, opts]
