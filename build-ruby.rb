@@ -168,7 +168,7 @@ class BuildRuby
   end
 
   def autoconf
-    Dir.chdir(File.join(@SRC_DIR, @TARGET_NAME)){
+    Dir.chdir(@TARGET_SRC_DIR){
       unless File.exist?('configure')
         cmd 'autoconf'
       end
