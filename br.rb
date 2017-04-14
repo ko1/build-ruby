@@ -64,7 +64,7 @@ end
 def build_loop target
   loop_dur      = (ENV['BR_LOOP_MINIMUM_DURATION'] || (60 * 3)).to_i # 180 sec for default
   build_timeout = (ENV['BR_BUILD_TIMEOUT'] || 3 * 60 * 60).to_i      # 3 hours for default
-  alert_to      = (ENV['BR_ALERT_TO'] || 'ko1c-failure@atdot.net')
+  alert_to      = (ENV['BR_ALERT_TO'] || '')                         # use default
 
   loop{
     start = Time.now
