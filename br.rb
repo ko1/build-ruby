@@ -42,12 +42,15 @@ def build target, extra_opts: ARGV, result_collector: DummyCollector, build_time
           end
         end
       rescue Interrupt, Timeout::Error
+        line = "br.rb: Process.kill(:KILL, -#{io.pid})"
+        result_collector << line
+        puts line
         Process.kill(:KILL, -io.pid) # kill process group
         sleep 1
       end
     }
   rescue SystemCallError => e
-    line = "#{e.message}"
+    line = "br.rb: #{e.inspect}"
     result_collector << line
     puts line
   end
