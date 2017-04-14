@@ -102,7 +102,7 @@ end
 
 def alert name, result, msg
   to = WATCH_LIST.dig(name, :to) || []
-  to = %w(ruby-alert@quickml.atdot.net) if to.empty?
+  to = %w(ruby-alerts@quickml.atdot.net) if to.empty?
   cmd = "mail -s 'failure alert on #{name} (#{result})' -aFrom:ko1c-failure@atdot.net #{to.join(' ')}"
   puts cmd
   IO.popen(cmd, 'r+'){|io|
