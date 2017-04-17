@@ -74,7 +74,7 @@ class BuildRuby
     @TARGET_INSTALL_DIR = File.join(@INSTALL_DIR, install_dir || @TARGET_NAME)
 
     if Etc.respond_to?(:nprocessors) && no_parallel == false
-      pn = Etc.nprocessors * 2
+      pn = Etc.nprocessors
       build_opts ||= "-j#{pn}"
       test_opts  ||= "TESTS='-j#{pn}'"
     end
