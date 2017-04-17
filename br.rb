@@ -81,8 +81,12 @@ def build_loop target
       timeout: build_timeout,
       to: alert_to,
     }
-    net = Net::HTTP.new('ci.rvm.jp', 80)
-    p net.put('/results', URI.encode_www_form(h))
+    begin
+      net = Net::HTTP.new('ci.rvm.jp', 80)
+      p net.put('/results', URI.encode_www_form(h))
+    rescue SocketError => e
+      p e
+    end
 
     # cleanup all
     unless r.success?
