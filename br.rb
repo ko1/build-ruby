@@ -42,6 +42,12 @@ def build target, extra_opts: ARGV, result_collector: DummyCollector, build_time
           end
         end
       rescue Interrupt, Timeout::Error
+        IO.popen('ps t', 'r'){|psio|
+          while line = psio.gets
+            result_collector << line
+            puts line
+          end
+        }
         line = "br.rb: Process.kill(:KILL, -#{io.pid})"
         result_collector << line
         puts line

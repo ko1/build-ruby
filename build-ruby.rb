@@ -123,13 +123,13 @@ class BuildRuby
 
   def cmd *args, on_failure: :raise
     cmd_str = args.join(' ')
-    @logger.info "$$$ #{cmd_str}"
+    @logger.info "$$$[beg] #{cmd_str}"
     IO.popen(cmd_str, 'r+', err: [:child, :out]){|io|
       io.each_line{|line|
         @logger.info line.chomp
       }
     }
-    @logger.info exit_str = "#{cmd_str.dump} exit with #{$?.to_i}."
+    @logger.info exit_str = "$$$[end] #{cmd_str.dump} exit with #{$?.to_i}."
 
     if !$?.success?
       case on_failure
