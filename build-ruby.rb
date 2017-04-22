@@ -194,6 +194,7 @@ class BuildRuby
       cmd "make update-download #{@build_opts}", on_failure: :ignore
       cmd "make update-rubyspec #{@build_opts}", on_failure: :ignore if @steps.include?('test_rubyspec')
       cmd "make update-src      #{@build_opts}", on_failure: :ignore unless @svn_revision
+      cmd "make after-update    #{@build_opts}", on_failure: :ignore
     }
   end
 
