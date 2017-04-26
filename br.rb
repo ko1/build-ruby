@@ -68,9 +68,11 @@ def clean_all target
 end
 
 def build_loop target
-  loop_dur      = (ENV['BR_LOOP_MINIMUM_DURATION'] || (60 * 3)).to_i # 180 sec for default
+  init_loop_dur = (ENV['BR_LOOP_MINIMUM_DURATION'] || (60 * 2)).to_i # 2 min for default
   build_timeout = (ENV['BR_BUILD_TIMEOUT'] || 3 * 60 * 60).to_i      # 3 hours for default
   alert_to      = (ENV['BR_ALERT_TO'] || '')                         # use default
+
+  loop_dur = init_loop_dur
 
   loop{
     start = Time.now
@@ -95,11 +97,13 @@ def build_loop target
     end
 
     # cleanup all
-    unless r.success?
+    if r.success?
+      loop_dur = init_loop_dur
+    else
       clean_all target
+      loop_dur += 60 if loop_dur < 60 * 60 # 1 hour
     end
 
-    # 60 sec break
     sleep_time = loop_dur - (Time.now.to_i - start.to_i)
     if sleep_time > 0
       puts "sleep: #{sleep_time}"
