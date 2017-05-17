@@ -2,7 +2,58 @@ require 'sinatra'
 require 'yaml/store'
 
 # load db
-MEM_DB = Hash.new{|h, k| h[k] = []}
+class Entries
+  def initialize
+    @ary = []
+  end
+
+  def <<(e)
+    @ary << e
+    update
+  end
+
+  def limit_time
+    Time.now.to_i - (60 * 60 * 24 * 3)
+  end
+
+  def update
+    limit_tm = limit_time()
+    @ary.delete_if{|(t, opts)|
+      if t < limit_tm
+        true
+      else
+        break
+      end
+    }
+  end
+
+  def merge(es)
+    limit_tm = limit_time()
+    es.each{|e|
+      if t > limit_tm
+        @ary << e
+      end
+    }
+  end
+
+  def each
+    @ary.each{|e|
+      yield e
+    }
+  end
+
+  def reverse_each
+    @ary.reverse_each{|e|
+      yield e
+    }
+  end
+
+  def last
+    @ary.last
+  end
+end
+
+MEM_DB = Hash.new{|h, k| h[k] = Entries.new}
 
 def db_file_name name
   File.join(__dir__, 'db', name)
@@ -22,7 +73,7 @@ db_files{|db_file|
       data << [k, db[k]]
     }
   }
-  MEM_DB[File.basename(db_file)] = data
+  MEM_DB[File.basename(db_file)].merge(data)
 }
 
 def db_write name, **opts
