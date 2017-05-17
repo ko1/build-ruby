@@ -29,8 +29,8 @@ class Entries
 
   def merge(es)
     limit_tm = limit_time()
-    es.each{|(t, opts)|
-      if t > limit_tm
+    es.each{|e|
+      if e[0] > limit_tm
         @ary << e
       end
     }
