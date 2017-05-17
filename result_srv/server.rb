@@ -51,6 +51,10 @@ class Entries
   def last
     @ary.last
   end
+
+  def find(&b)
+    @ary.find(&b)
+  end
 end
 
 MEM_DB = Hash.new{|h, k| h[k] = Entries.new}
