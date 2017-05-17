@@ -29,7 +29,7 @@ class Entries
 
   def merge(es)
     limit_tm = limit_time()
-    es.each{|e|
+    es.each{|(t, opts)|
       if t > limit_tm
         @ary << e
       end
