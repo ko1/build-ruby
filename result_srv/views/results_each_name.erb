@@ -6,7 +6,6 @@
   <% vs.reverse_each{|(t, opts)| %>
     <% next unless t %>
     <tr>
-      <td> <a href='/results/<%=h name %>'><%=h name %></a></td>
       <td> <a href='/results/<%=h name %>/<%=h t %>'><%= Time.at(t) %></a></td>
       <td>
       <% if opts[:detail_link] %>
