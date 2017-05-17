@@ -148,7 +148,7 @@ def build_loop target
     begin
       net = Net::HTTP.new('ci.rvm.jp', 80)
       p net.put('/results', URI.encode_www_form(h))
-    rescue SocketError => e
+    rescue SocketError, Net::ReadTimeout => e
       p e
     end
 
