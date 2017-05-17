@@ -34,7 +34,7 @@ def db_write name, **opts
   db.transaction{
     db[now] = opts
   }
-  alert name, opts[:result], otps2msg(name, opts) if opts[:result] != 'OK'
+  alert name, opts[:result], otps2msg(name, opts) if /OK/ !~ opts[:result]
 end
 
 def db_last_update name
@@ -126,6 +126,24 @@ WATCH_LIST = {
   # name => {timeout: sec, alerted: ...,
   #          to: [...]}
 }
+
+helpers do
+  def recent_stat vs, sec
+    fs = []
+    rs_count = 0
+    until_tm = Time.at(Time.now.to_i - sec).to_i
+    vs.reverse_each{|e|
+      t, opts = *e
+      if t >= until_tm
+	rs_count += 1
+	fs << e if /OK/ !~ opts[:result]
+      else
+	break
+      end
+    }
+    return fs, rs_count
+  end
+end
 
 Thread.new{
   loop{

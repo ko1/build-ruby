@@ -1,14 +1,37 @@
 
-<h1>Latest results</h1>
+<h1>Latest results at <%= Time.now %></h1>
 
 <table>
+  <tr>
+    <th>Name</th>
+    <th>Latest</th>
+    <th></th>
+    <th>Stat in last 3 days<br/>errors / tries</th>
+    <th>Stat in last 24H<br/>errors / tries</th>
+    <th>Errors in last 24H</th>
+  </tr>
+  <% d3_fs_total = d3_rs_total = 0 %>
+  <% d1_fs_total = d1_rs_total = 0 %>
+  <% now = Time.now
+     good_diff = -> t do
+       d = now.to_i - t
+       case
+       when d < 60
+         "#{'%02d' % d} sec"
+       when d < 60 * 60
+         "#{'%02d' % (d/60)} min"
+       else
+         "#{d/(60 * 60)} hour"
+       end
+     end
+   %>
+     
   <% MEM_DB.each{|name, vs| %>
     <% t, opts = *vs.last %>
     <% next unless t %>
     <tr>
       <td> <a href='/results/<%=h name %>'><%=h name %></a></td>
-      <td> <a href='/results/<%=h name %>/<%=h t %>'><%=h Time.at(t) %></a></td>
-      <td>
+      <td> <a href='/results/<%=h name %>/<%=h t %>'><%=h Time.at(t).strftime('%H:%M') %></a> (<%= good_diff.call(t) %> ago)
       <% if opts[:detail_link] %>
 	<a href='<%=h opts[:detail_link]%>'><%=h opts[:result] %></a>
       <% else %>
@@ -20,6 +43,29 @@
 	timeout (next alert: <%= Time.at(next_alert_time) %>)
         <% end %>
       </td>
+      <% fs, rs_count = recent_stat(vs, 60 * 60 * 24 * 3); msg = "#{'%4d' % fs.size} / #{'%4d' % rs_count} (#{'%4.1f%%' % (100.0 * fs.size / rs_count)})" %>
+      <% d3_fs_total += fs.size; d3_rs_total += rs_count %>
+      <td align='center'><div style='font-family: monospace; white-space: pre;'><%= msg %></div></td>
+
+      <% fs, rs_count = recent_stat(vs, 60 * 60 * 24 * 1); msg = "#{'%4d' % fs.size} / #{'%4d' % rs_count} (#{'%4.1f%%' % (100.0 * fs.size / rs_count)})" %>
+      <% d1_fs_total += fs.size; d1_rs_total += rs_count %>
+      <td align='center'><div style='font-family: monospace; white-space: pre;'><%= msg %></div></td>
+      <td>
+        <% fs.map.with_index do |(t, opts), i| %>
+          [<a href='/results/<%=h name %>/<%=h t %>'><%=h Time.at(t).strftime('%H:%M') %></a>]
+          <% if i > 5 %>
+            and more...
+          <%  break %>
+          <% end %>
+        <% end %>
+      </td>
     </tr>
   <% } %>
+  <tr>
+    <td></td>
+    <td>TOTAL</td>
+    <td></td>
+    <td align='center'><div style='font-family: monospace; white-space: pre;'><%= "#{'%4d' % d3_fs_total} / #{'%4d' % d3_rs_total} (#{'%4.1f%%' % (100.0 * d3_fs_total / d3_rs_total)})" %></div></td>
+    <td align='center'><div style='font-family: monospace; white-space: pre;'><%= "#{'%4d' % d1_fs_total} / #{'%4d' % d1_rs_total} (#{'%4.1f%%' % (100.0 * d1_fs_total / d1_rs_total)})" %></div></td>
+  </tr>
 </table>
