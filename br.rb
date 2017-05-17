@@ -194,8 +194,8 @@ when 'list'
     puts File.basename(target_config, '.br')
   }
 when 'build'
-  r, logfile = build ARGV.shift || raise('build target is not provided')
-  unless r.success?
+  result, logfile = build ARGV.shift || raise('build target is not provided')
+  unless /OK/ =~ result
     system("#{PAGER} #{logfile}")
   end
 when 'build_loop'
