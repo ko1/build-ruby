@@ -31,6 +31,7 @@ def build target, extra_opts: ARGV, result_collector: DummyCollector, build_time
 
   # opts from command line
   opts.concat extra_opts
+  timeout_p = false
 
   begin
     IO.popen("ruby #{BUILD_RUBY_SCRIPT} #{opts.join(' ')}", 'r', pgroup: 0){|io|
@@ -48,9 +49,12 @@ def build target, extra_opts: ARGV, result_collector: DummyCollector, build_time
             puts line
           end
         }
-        line = "br.rb: Process.kill(:KILL, -#{io.pid})"
+        line = "$$$ br.rb: Process.kill(:SEGV, -#{io.pid})"
         result_collector << line
         puts line
+        Process.kill(:SEGV, -io.pid) # SEGV process group
+        timeout_p = true
+        sleep 1
         Process.kill(:KILL, -io.pid) # kill process group
         sleep 1
       end
@@ -60,11 +64,50 @@ def build target, extra_opts: ARGV, result_collector: DummyCollector, build_time
     result_collector << line
     puts line
   end
-  [$?, logfile]
+
+  result = case
+    when timeout_p
+      'NG/timeout'
+    when $?.success?
+      result = 'OK'
+    else
+      'NG'
+    end
+  [result, logfile]
 end
 
 def clean_all target
   build target, extra_opts: ['--rm=all']
+end
+
+def check_logfile logfile
+  r = {
+    exit_results: [],
+    rev: nil,
+    test_all: nil,
+    test_spec: nil,
+  }
+
+  cmd = nil
+  open(logfile){|f|
+    f.each_line{|line|
+      case
+      when /INFO -- : \$\$\$\[beg\] (.+)/ =~ line
+        cmd = $1
+      when /INFO -- : \$\$\$\[end\] (.+)/ =~ line
+        r[:exit_results] << $1
+      when !r[:rev] && /INFO -- : At revision (\d+)\./ =~ line
+        r[:rev] = $1
+      # I, [2017-05-18T00:26:50.162829 #7889]  INFO -- : 17057 tests, 4935260 assertions, 0 failures, 0 errors, 76 skips
+      when /test-all/ =~ cmd     && /INFO -- : (\d+ tests, \d+ assertions, \d+ failures, \d+ errors, \d+ skips)/ =~ line
+        r[:test_all] = $1
+      # I, [2017-05-18T00:04:51.269280 #10900]  INFO -- : 3568 files, 26383 examples, 200847 expectations, 0 failures, 0 errors, 0 tagged
+      when /spec/ =~ cmd && /INFO -- : (\d+ files, \d+ examples, \d+ expectations, \d+ failures, \d+ errors, \d+ tagged)/ =~ line 
+        r[:test_spec] = $1
+      end
+    }
+  } if File.exist?(logfile)
+  r
 end
 
 def build_loop target
@@ -76,19 +119,32 @@ def build_loop target
 
   loop{
     start = Time.now
-    r, logfile = build target, result_collector: results = [], build_timeout: build_timeout
-    p r
+    result, logfile = build target, result_collector: results = [], build_timeout: build_timeout
+
+    puts result
+
+    # check log file
+    r = check_logfile(logfile)
+    result = "#{result} (r#{r[:rev]})" if r[:rev]
+    results.unshift(
+      "rev: #{r[:rev]}\n",
+      "test-all : #{r[:test_all]}\n",
+      "test-spec: #{r[:test_spec]}\n",
+      "exit statuses: \n",
+      *r[:exit_results].map{|line| '  ' + line + "\n"})
+
     # send result
-    gist_url = r.success? ? nil : `gist #{logfile}`
+    gist_url = `gist #{logfile}`
     h = {
       name: "#{target}@#{Socket.gethostname}",
-      result: r.success? ? 'OK' : 'NG',
+      result: result,
       detail_link: gist_url,
       desc: results.join,
-      memo: Etc.uname.inspect,
+      memo: `uname -a`,
       timeout: build_timeout,
       to: alert_to,
     }
+
     begin
       net = Net::HTTP.new('ci.rvm.jp', 80)
       p net.put('/results', URI.encode_www_form(h))
@@ -97,7 +153,7 @@ def build_loop target
     end
 
     # cleanup all
-    if r.success?
+    if /OK/ =~ result
       loop_dur = init_loop_dur
     else
       clean_all target
