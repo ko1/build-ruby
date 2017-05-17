@@ -34,7 +34,7 @@ def build target, extra_opts: ARGV, result_collector: DummyCollector, build_time
   timeout_p = false
 
   begin
-    IO.popen("ruby #{BUILD_RUBY_SCRIPT} #{opts.join(' ')}", 'r', pgroup: 0){|io|
+    IO.popen("ruby #{BUILD_RUBY_SCRIPT} #{opts.join(' ')}", 'r', pgroup: 0, err: [:child, :out]){|io|
       begin
         Timeout.timeout(build_timeout) do
           while line = io.gets
@@ -56,7 +56,7 @@ def build target, extra_opts: ARGV, result_collector: DummyCollector, build_time
         timeout_p = true
         sleep 1
         Process.kill(:KILL, -io.pid) # kill process group
-        sleep 1
+        result_collector << io.read
       end
     }
   rescue SystemCallError => e
@@ -120,7 +120,6 @@ def build_loop target
   loop{
     start = Time.now
     result, logfile = build target, result_collector: results = [], build_timeout: build_timeout
-
     puts result
 
     # check log file
