@@ -99,10 +99,10 @@ def check_logfile logfile
       when !r[:rev] && /INFO -- : At revision (\d+)\./ =~ line
         r[:rev] = $1
       # I, [2017-05-18T00:26:50.162829 #7889]  INFO -- : 17057 tests, 4935260 assertions, 0 failures, 0 errors, 76 skips
-      when /test-all/ =~ cmd     && /INFO -- : (\d+ tests, \d+ assertions, \d+ failures, \d+ errors, \d+ skips)/ =~ line
+      when /test-all/ =~ cmd     && /INFO -- : (\d+ tests?, \d+ assertions?, \d+ failures?, \d+ errors?, \d+ skips?)/ =~ line
         r[:test_all] = $1
       # I, [2017-05-18T00:04:51.269280 #10900]  INFO -- : 3568 files, 26383 examples, 200847 expectations, 0 failures, 0 errors, 0 tagged
-      when /spec/ =~ cmd && /INFO -- : (\d+ files, \d+ examples, \d+ expectations, \d+ failures, \d+ errors, \d+ tagged)/ =~ line 
+      when /spec/ =~ cmd && /INFO -- : (\d+ files?, \d+ examples?, \d+ expectations?, \d+ failures?, \d+ errors?, \d+ tagged)/ =~ line 
         r[:test_spec] = $1
       end
     }
