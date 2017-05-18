@@ -5,6 +5,7 @@ require 'net/http'
 require 'uri'
 require 'etc'
 require 'socket'
+require 'yaml/store'
 
 cmd = ARGV.shift
 
@@ -98,10 +99,12 @@ def check_logfile logfile
         r[:exit_results] << $1
       when !r[:rev] && /INFO -- : At revision (\d+)\./ =~ line
         r[:rev] = $1
-      # I, [2017-05-18T00:26:50.162829 #7889]  INFO -- : 17057 tests, 4935260 assertions, 0 failures, 0 errors, 76 skips
+      when !r[:rev] && /INFO -- : Updated to revision (\d+)\./ =~ line
+        r[:rev] = $1
+      # INFO -- : 17057 tests, 4935260 assertions, 0 failures, 0 errors, 76 skips
       when /test-all/ =~ cmd     && /INFO -- : (\d+ tests?, \d+ assertions?, \d+ failures?, \d+ errors?, \d+ skips?)/ =~ line
         r[:test_all] = $1
-      # I, [2017-05-18T00:04:51.269280 #10900]  INFO -- : 3568 files, 26383 examples, 200847 expectations, 0 failures, 0 errors, 0 tagged
+      # INFO -- : 3568 files, 26383 examples, 200847 expectations, 0 failures, 0 errors, 0 tagged
       when /spec/ =~ cmd && /INFO -- : (\d+ files?, \d+ examples?, \d+ expectations?, \d+ failures?, \d+ errors?, \d+ tagged)/ =~ line 
         r[:test_spec] = $1
       end
@@ -110,61 +113,79 @@ def check_logfile logfile
   r
 end
 
-def build_loop target
+def build_report target
   init_loop_dur = (ENV['BR_LOOP_MINIMUM_DURATION'] || (60 * 2)).to_i # 2 min for default
   build_timeout = (ENV['BR_BUILD_TIMEOUT'] || 3 * 60 * 60).to_i      # 3 hours for default
   alert_to      = (ENV['BR_ALERT_TO'] || '')                         # use default
+  report_host   = (ENV['BR_REPORT_HOST'] || 'ci.rvm.jp')             # report host
+  if /(.+):(\d+)\z/ =~ report_host
+    report_host = $1
+    report_port = $2.to_i
+  else
+    report_port = 80
+  end
 
-  loop_dur = init_loop_dur
+  state_db = YAML::Store.new(File.join(WORKING_DIR, 'state.yaml'))
+  state = nil
+  state_db.transaction do
+    state = state_db[target] || {loop_dur: init_loop_dur, failure: 0}
+  end
 
-  loop{
-    start = Time.now
-    result, logfile = build target, result_collector: results = [], build_timeout: build_timeout
-    puts result
+  start = Time.now
+  result, logfile = build target, result_collector: results = [], build_timeout: build_timeout
+  puts result
 
-    # check log file
-    r = check_logfile(logfile)
-    result = "#{result} (r#{r[:rev]})" if r[:rev]
-    results.unshift(
-      "rev: #{r[:rev]}\n",
-      "test-all : #{r[:test_all]}\n",
-      "test-spec: #{r[:test_spec]}\n",
-      "exit statuses: \n",
-      *r[:exit_results].map{|line| '  ' + line + "\n"})
+  # check log file
+  r = check_logfile(logfile)
+  result = "#{result} (r#{r[:rev]})" if r[:rev]
+  results.unshift(
+    "rev: #{r[:rev]}\n",
+    "test-all : #{r[:test_all]}\n",
+    "test-spec: #{r[:test_spec]}\n",
+    "exit statuses: \n",
+    *r[:exit_results].map{|line| '  ' + line + "\n"},
+    '',
+  )
 
-    # send result
-    gist_url = `gist #{logfile}`
-    h = {
-      name: "#{target}@#{Socket.gethostname}",
-      result: result,
-      detail_link: gist_url,
-      desc: results.join,
-      memo: `uname -a`,
-      timeout: build_timeout,
-      to: alert_to,
-    }
-
-    begin
-      net = Net::HTTP.new('ci.rvm.jp', 80)
-      p net.put('/results', URI.encode_www_form(h))
-    rescue SocketError, Net::ReadTimeout => e
-      p e
-    end
-
-    # cleanup all
-    if /OK/ =~ result
-      loop_dur = init_loop_dur
-    else
-      clean_all target
-      loop_dur += 60 if loop_dur < 60 * 60 # 1 hour
-    end
-
-    sleep_time = loop_dur - (Time.now.to_i - start.to_i)
-    if sleep_time > 0
-      puts "sleep: #{sleep_time}"
-      sleep sleep_time
-    end
+  # send result
+  gist_url = `gist #{logfile}`
+  h = {
+    name: "#{target}@#{Socket.gethostname}",
+    result: result,
+    detail_link: gist_url,
+    desc: results.join,
+    memo: `uname -a`,
+    timeout: build_timeout,
+    to: alert_to,
   }
+
+  begin
+    net = Net::HTTP.new(report_host, report_port)
+    p net.put('/results', URI.encode_www_form(h))
+  rescue SocketError, Net::ReadTimeout => e
+    p e
+  end
+
+  # cleanup
+  if /OK/ =~ result
+    state[:loop_dur] = init_loop_dur
+    state[:failure] = 0
+  else
+    clean_all target if state[:failure] > 0
+    state[:failure]  += 1
+    state[:loop_dur] += 60 if state[:loop_dur] < 60 * 60 * 3 # 1 hour
+  end
+
+  # store last state.
+  state_db.transaction do
+    state_db[target] = state
+  end
+
+  sleep_time = state[:loop_dur] - (Time.now.to_i - start.to_i)
+  if sleep_time > 0
+    puts "sleep: #{sleep_time}"
+    sleep sleep_time
+  end
 end
 
 def target_configs
@@ -197,8 +218,8 @@ when 'build'
   unless /OK/ =~ result
     system("#{PAGER} #{logfile}")
   end
-when 'build_loop'
-  build_loop ARGV.shift || raise('build target is not provided')
+when 'build_report'
+  build_report ARGV.shift || raise('build target is not provided')
 when 'build_all'
   pattern = ARGV.shift if ARGV[0] && ARGV[0] !~ /--/
   target_configs{|target_config|
