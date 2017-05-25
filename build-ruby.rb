@@ -50,7 +50,7 @@ class BuildRuby
                  gist: false
     #
     @REPOSITORY      = repository      || 'https://svn.ruby-lang.org/repos/ruby/trunk'
-    @REPOSITORY_TYPE = repository_type || find_repository_type(@REPOSITORY)
+    @REPOSITORY_TYPE = (repository_type || find_repository_type(@REPOSITORY)).to_sym
 
     @git_branch = git_branch
     @svn_revision = svn_revision
@@ -103,7 +103,11 @@ class BuildRuby
     when /svn/
       :svn
     else
-      raise "unkown repository type: #{repository}"
+      if File.exist?(repository) && File.exist?(File.join(repository, '.git'))
+        :git
+      else
+        raise "unkown repository type: #{repository}"
+      end
     end
   end
 
@@ -412,9 +416,6 @@ opt.on('--rm=[all|src|build|install]'){|types|
     rm_types = [:all]
   end
 }
-opt.on('--add-path=[ADDITIONAL_PATH]'){|path|
-  ENV['PATH'] = [path, ENV['PATH']].join(File::PATH_SEPARATOR)
-}
 opt.on('--no-parallel'){
   opts[:no_parallel] = true
 }
@@ -436,6 +437,9 @@ opt.on('--gist'){
 target_name = nil
 opt.on('--target_name=[TARGET_NAME]'){|t|
   target_name = t
+}
+opt.on('--add-path=[ADDITIONAL_PATH]'){|path|
+  ENV['PATH'] = [path, ENV['PATH']].join(File::PATH_SEPARATOR)
 }
 
 opt.parse!(ARGV)
