@@ -155,9 +155,9 @@ class BuildRuby
       case @REPOSITORY_TYPE
       when :svn
         if @svn_revision
-          cmd 'svn', 'checkout', "-r#{@svn_revision}", @REPOSITORY, @TARGET_NAME
+          cmd 'svn', 'checkout', '-q', "-r#{@svn_revision}", @REPOSITORY, @TARGET_NAME
         else
-          cmd 'svn', 'checkout', @REPOSITORY, @TARGET_NAME
+          cmd 'svn', 'checkout', '-q', @REPOSITORY, @TARGET_NAME
         end
       when :git
         if @git_branch
