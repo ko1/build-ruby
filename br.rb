@@ -5,6 +5,7 @@ require 'net/http'
 require 'uri'
 require 'etc'
 require 'socket'
+require 'yaml'
 require 'yaml/store'
 
 cmd = ARGV.shift
@@ -17,8 +18,24 @@ def (DummyCollector = Object.new).<<(obj)
   # ignore
 end
 
+# load TARGETS
+targets_yaml = File.join(WORKING_DIR, 'targets.yaml')
+if File.exist?(targets_yaml)
+  TARGETS = YAML.load(File.read(targets_yaml))
+else
+  TARGETS = {}
+end
+Dir.glob(File.join(WORKING_DIR, '*.br')){|file|
+  target = File.basename(file, '.br')
+  TARGETS[target] = File.read(file)
+}
+
+# setup params
+TARGETS.each{|target, config|
+  TARGETS[target] = config ? config.split("\n") : []
+}
+
 def build target, extra_opts: ARGV, result_collector: DummyCollector, build_timeout: (60 * 60 * 3) # 3 hours
-  target_file = File.expand_path(File.join(WORKING_DIR, "#{target}.br"))
   opts = []
   # opts by default
   opts << "--target_name=#{target}"
@@ -26,9 +43,7 @@ def build target, extra_opts: ARGV, result_collector: DummyCollector, build_time
   opts << "--logfile=#{logfile}"
 
   # opts from config file
-  opts.concat open(target_file){|f|
-    f.readlines.map{|line| line.chomp}
-  }
+  opts.concat(TARGETS[target])
 
   # opts from command line
   opts.concat extra_opts
@@ -188,12 +203,6 @@ def build_report target
   end
 end
 
-def target_configs
-  Dir.glob(File.join(WORKING_DIR, '*.br')){|file|
-    yield file
-  }
-end
-
 def run target
   raise "run is unsupported yet"
 end
@@ -210,8 +219,8 @@ br.rb: supported commands
 EOS
 
 when 'list'
-  target_configs{|target_config|
-    puts File.basename(target_config, '.br')
+  TARGETS.each{|target, config|
+    puts '%-20s - %s' % [target, config]
   }
 when 'build'
   result, logfile = build ARGV.shift || raise('build target is not provided')
@@ -222,15 +231,15 @@ when 'build_report'
   build_report ARGV.shift || raise('build target is not provided')
 when 'build_all'
   pattern = ARGV.shift if ARGV[0] && ARGV[0] !~ /--/
-  target_configs{|target_config|
-    next if pattern && Regexp.compile(pattern) !~ target_config
-    build File.basename(target_config, '.br')
+  TARGETS.each{|target, config|
+    next if pattern && Regexp.compile(pattern) !~ target
+    build target
   }
 when 'run'
   run ARGV.shift
 when 'run_all'
-  target_configs{|target_config|
-    run File.basename(target_config, '.br')
+  TARGETS.each{|target, config|
+    run target
   }
 else
   raise "#{cmd} is not supported"
