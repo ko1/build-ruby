@@ -412,6 +412,9 @@ opt.on('--rm=[all|src|build|install]'){|types|
     rm_types = [:all]
   end
 }
+opt.on('--add-path=[ADDITIONAL_PATH]'){|path|
+  ENV['PATH'] = [path, ENV['PATH']].join(File::PATH_SEPARATOR)
+}
 opt.on('--no-parallel'){
   opts[:no_parallel] = true
 }
