@@ -101,10 +101,13 @@ def check_logfile logfile
     exit_results: [],
     rev: nil,
     test_all: nil,
+    test_all_log: [],
     test_spec: nil,
   }
 
   cmd = nil
+  test_all_logging_lines = 0
+
   open(logfile){|f|
     f.each_line{|line|
       case
@@ -117,8 +120,14 @@ def check_logfile logfile
       when !r[:rev] && /INFO -- : Updated to revision (\d+)\./ =~ line
         r[:rev] = $1
       # INFO -- : 17057 tests, 4935260 assertions, 0 failures, 0 errors, 76 skips
-      when /test-all/ =~ cmd     && /INFO -- : (\d+ tests?, \d+ assertions?, \d+ failures?, \d+ errors?, \d+ skips?)/ =~ line
+      when /test-all/ =~ cmd && /INFO -- : (\d+ tests?, \d+ assertions?, \d+ failures?, \d+ errors?, \d+ skips?)/ =~ line
         r[:test_all] = $1
+      when /test-all/ =~ cmd && /INFO -- (:   \d+\))/ =~ line
+        test_all_logging_lines = 2
+        r[:test_all_log] << $1
+      when /test-all/ =~ cmd && test_all_logging_lines > 0 && /INFO -- (: .+)/ =~ line
+        test_all_logging_lines -= 1
+        r[:test_all_log] << $1
       # INFO -- : 3568 files, 26383 examples, 200847 expectations, 0 failures, 0 errors, 0 tagged
       when /spec/ =~ cmd && /INFO -- : (\d+ files?, \d+ examples?, \d+ expectations?, \d+ failures?, \d+ errors?, \d+ tagged)/ =~ line 
         r[:test_spec] = $1
@@ -156,6 +165,7 @@ def build_report target
   results.unshift(
     "rev: #{r[:rev]}\n",
     "test-all : #{r[:test_all]}\n",
+    *r[:test_all_log],
     "test-spec: #{r[:test_spec]}\n",
     "exit statuses: \n",
     *r[:exit_results].map{|line| '  ' + line + "\n"},
