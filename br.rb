@@ -162,15 +162,15 @@ def build_report target
   # check log file
   r = check_logfile(logfile)
   result = "#{result} (r#{r[:rev]})" if r[:rev]
-  results.unshift(
-    "rev: #{r[:rev]}\n",
-    "test-all : #{r[:test_all]}\n",
+  results.unshift(*[
+    "rev: #{r[:rev]}",
+    "test-all : #{r[:test_all]}",
     *r[:test_all_log],
-    "test-spec: #{r[:test_spec]}\n",
-    "exit statuses: \n",
-    *r[:exit_results].map{|line| '  ' + line + "\n"},
+    "test-spec: #{r[:test_spec]}",
+    "exit statuses:",
+    *r[:exit_results].map{|line| '  ' + line},
     '',
-  )
+  ].join("\n"))
 
   # send result
   gist_url = `gist #{logfile}`
