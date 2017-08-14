@@ -2,16 +2,14 @@
 <h1>Results of <%=h name %></h1>
 
 <table>
-  <% vs = MEM_DB[name] %>
-  <% vs.reverse_each{|(t, opts)| %>
-    <% next unless t %>
+  <% results.each{|result| %>
     <tr>
-      <td> <a href='/results/<%=h name %>/<%=h t %>'><%= Time.at(t) %></a></td>
+      <td> <a href='/results/<%=h name %>/<%=h result.id %>'><%= result.updated_at %></a></td>
       <td>
-      <% if opts[:detail_link] %>
-	<a href='<%=opts[:detail_link]%>'><%=h opts[:result] %></a>
+      <% if result.detail_link %>
+	<a href='<%= result.detail_link %>'><%=h result.result %></a>
       <% else %>
-	<%=h opts[:result] %>
+	<%=h result.result %>
       <% end %>
       </td>
       <td>

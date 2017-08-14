@@ -1,0 +1,13 @@
+require 'rake'
+
+require 'sinatra/activerecord'
+require 'sinatra/activerecord/rake'
+require './app'
+
+desc 'Run tests'
+task 'test' do
+  sh 'bundle exec rake db:drop'
+  sh 'bundle exec rake db:migrate'
+  sh 'bundle exec rake db:seed'
+  ruby 'test/test_app.rb'
+end

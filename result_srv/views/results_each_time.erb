@@ -1,22 +1,15 @@
 
-<h1>Results of <%= name %> at <%= Time.at(time) %></h1>
-
-  <% vs = MEM_DB[name] %>
-  <% data = vs.find{|(t, opts)| t == time} %>
-  <% if data %>
-    <% t, opts = *data %>
-    <% next unless t %>
+<h1>Results of <%= name %> at <%= result.updated_at %></h1>
     <ul>
-      <li><a href='/results/<%=h name %>'><%=h name %></a></li>
-      <li><a href='/results/<%=h name %>/<%= t %>'><%= Time.at(t) %></a></li>
+      <li><a href='/results/<%=h result.name %>'><%=h result.name %></a></li>
+      <li><a href='/results/<%=h result.name %>/<%= result.id %>'><%= result.updated_at %></a></li>
       <li>
-      <% if opts[:detail_link] %>
-	<%=h opts[:result] %> <a href='<%=h opts[:detail_link]%>'>[LOG]</a>
+      <% if result.detail_link %>
+	<%=h result.result %> <a href='<%=h result.detail_link %>'>[LOG]</a>
       <% else %>
-	<%=h opts[:result] %>
+	<%=h result.result %>
       <% end %>
       </li>
-      <li><pre><%=h opts[:desc]%></pre></li>
-      <li><pre><%=h opts[:memo]%></pre></li>
+      <li><pre><%=h result.desc %></pre></li>
+      <li><pre><%=h result.memo %></pre></li>
     </ul>
-  <% end %>

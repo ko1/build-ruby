@@ -1,0 +1,22 @@
+source "http://rubygems.org"
+
+gem 'activerecord'
+gem 'sinatra'
+gem 'sinatra-activerecord'
+gem 'rake'
+gem 'unicorn'
+gem 'sqlite3'
+
+group :development do
+  gem 'shotgun'
+  gem 'tux'
+  gem 'foreman'
+end
+
+group :test do
+  gem 'test-unit'
+end
+
+group :production do
+  gem 'pg'
+end
