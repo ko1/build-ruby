@@ -28,14 +28,15 @@ class ResultServer < Sinatra::Base
     r = Result.new(name: name, **opts)
     r.save
     alert_setup(name, opts[:timeout], opts[:to])
-    alert name, opts[:result], otps2msg(name, opts) if /OK/ !~ opts[:result]
+    alert name, opts[:result], otps2msg(name, opts), r.id if /OK/ !~ opts[:result]
+    r.id
   end
 
   put '/results' do
     name = par:name
     opts = params_set(:result, :desc, :detail_link, :memo)
-    db_write(name, **opts)
-    'OK'
+    result_id = db_write(name, **opts)
+    "http://ci.rvm.jp/results/#{name}/#{result_id}"
   end
 
   get '/results/' do
@@ -142,21 +143,29 @@ memo:
 EOS
 end
 
-if ENV['RACK_ENV'] == 'test'
-  def alert *args
-    $last_alert = args
-  end
-else
-  def alert name, result, msg
-    to = WATCH_LIST.dig(name, :to) || []
-    to = %w(ruby-alerts@quickml.atdot.net) if to.empty?
-    cmd = "mail -s 'failure alert on #{name} (#{result})' -aFrom:ko1c-failure@atdot.net #{to.join(' ')}"
+def alert name, result, msg, result_id = nil
+  to = WATCH_LIST.dig(name, :to) || []
+  to = %w(ruby-alerts@quickml.atdot.net) if to.empty?
+  subject = "failure alert on #{name} (#{result})"
+  url = "http://ci.rvm.jp/results/#{name}/#{result_id}"
+  cmd = "mail -s '#{subject}' -aFrom:ko1c-failure@atdot.net #{to.join(' ')}"
+
+  if ENV['RACK_ENV'] == 'test'
+    $last_alert = {
+      to: to,
+      subject: subject,
+      url: url,
+      cmd: cmd,
+      msg: msg,
+    }
+  else
     puts cmd
     IO.popen(cmd, 'r+'){|io|
-      io.puts msg + "\n\n-- \nhttp://ci.rvm.jp/"
+      io.puts msg + "\n\n-- \n{url}"
       io.close_write
       puts io.read
     }
+    system("ruby slack-notice.rb '<!here> #{subject}. See #{url}'")
   end
 end
 
