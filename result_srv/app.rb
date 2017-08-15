@@ -1,6 +1,9 @@
 require 'bundler'
 Bundler.require
 
+Time.zone = "Tokyo"
+ActiveRecord::Base.default_timezone = :local
+
 class ResultServer < Sinatra::Base
   configure do
     register Sinatra::ActiveRecordExtension
