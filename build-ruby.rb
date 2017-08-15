@@ -6,6 +6,7 @@ require 'pp'
 require 'logger'
 require 'benchmark'
 require 'etc'
+require 'timeout'
 
 class BuildRuby
   BUILD_STEPS = %w{
@@ -47,7 +48,8 @@ class BuildRuby
                  exclude_steps: [],
                  logfile: nil,
                  quiet: false,
-                 gist: false
+                 gist: false,
+                 timeout: nil
     #
     @REPOSITORY      = repository      || 'https://svn.ruby-lang.org/repos/ruby/trunk'
     @REPOSITORY_TYPE = (repository_type || find_repository_type(@REPOSITORY)).to_sym
@@ -90,6 +92,7 @@ class BuildRuby
     @steps = steps
     @quiet = quiet
     @gist = gist
+    @timeout = timeout
 
     logfile ||= "log.build-ruby.#{@TARGET_NAME}.#{Time.now.strftime('%Y%m%d-%H%M%S')}"
 
@@ -128,10 +131,25 @@ class BuildRuby
   def cmd *args, on_failure: :raise
     cmd_str = args.join(' ')
     @logger.info "$$$[beg] #{cmd_str}"
-    IO.popen(cmd_str, 'r+', err: [:child, :out]){|io|
-      io.each_line{|line|
-        @logger.info line.chomp
-      }
+    IO.popen(cmd_str, 'r+'){|io|
+      if @timeout
+        begin
+          Timeout.timeout(@timeout) do
+            io.each_line{|line|
+              @logger.info line.chomp
+            }
+          end
+        rescue Interrupt, Timeout::Error
+          STDERR.puts $!.to_s
+          require_relative 'psj'
+          kill_descendant_with_gdb_info
+          raise
+        end
+      else
+        io.each_line{|line|
+          @logger.info line.chomp
+        }
+      end
     }
     @logger.info exit_str = "$$$[end] #{cmd_str.dump} exit with #{$?.to_i}."
 
@@ -434,6 +452,10 @@ opt.on('-q', '--quiet'){
 opt.on('--gist'){
   opts[:gist] = true
 }
+opt.on('--timeout=[TIMEOUT]'){|timeout|
+  opts[:timeout] = timeout.to_i
+}
+
 target_name = nil
 opt.on('--target_name=[TARGET_NAME]'){|t|
   target_name = t

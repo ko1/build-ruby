@@ -1,6 +1,5 @@
 
 require 'optparse'
-require 'timeout'
 require 'net/http'
 require 'uri'
 require 'etc'
@@ -35,44 +34,25 @@ TARGETS.each{|target, config|
   TARGETS[target] = config ? config.split("\n") : []
 }
 
-def build target, extra_opts: ARGV, result_collector: DummyCollector, build_timeout: (60 * 60 * 3) # 3 hours
+def build target, extra_opts: ARGV, result_collector: DummyCollector, build_timeout: (60 * 60 * 2) # 2 hours
   opts = []
   # opts by default
   opts << "--target_name=#{target}"
   logfile = File.join(WORKING_DIR, 'logs', "brlog.#{target}.#{Time.now.strftime('%Y%m%d-%H%M%S')}")
   opts << "--logfile=#{logfile}"
+  opts << "--timeout=#{build_timeout}"
 
   # opts from config file
   opts.concat(TARGETS[target])
 
   # opts from command line
   opts.concat extra_opts
-  timeout_p = false
 
   begin
-    IO.popen("ruby #{BUILD_RUBY_SCRIPT} #{opts.join(' ')}", 'r', pgroup: 0, err: [:child, :out]){|io|
-      begin
-        Timeout.timeout(build_timeout) do
-          while line = io.gets
-            result_collector << line
-            puts line
-          end
-        end
-      rescue Interrupt, Timeout::Error
-        IO.popen('ps t', 'r'){|psio|
-          while line = psio.gets
-            result_collector << line
-            puts line
-          end
-        }
-        line = "$$$ br.rb: Process.kill(:SEGV, -#{io.pid})"
+    IO.popen("ruby #{BUILD_RUBY_SCRIPT} #{opts.join(' ')}", 'r', err: [:child, :out]){|io|
+      while line = io.gets
         result_collector << line
         puts line
-        Process.kill(:SEGV, -io.pid) # SEGV process group
-        timeout_p = true
-        sleep 1
-        Process.kill(:KILL, -io.pid) # kill process group
-        result_collector << io.read
       end
     }
   rescue SystemCallError => e
@@ -81,14 +61,11 @@ def build target, extra_opts: ARGV, result_collector: DummyCollector, build_time
     puts line
   end
 
-  result = case
-    when timeout_p
-      'NG/timeout'
-    when $?.success?
-      result = 'OK'
-    else
-      'NG'
-    end
+  result = if $?.success?
+             'OK'
+           else
+             'NG'
+           end
   [result, logfile]
 end
 
@@ -139,7 +116,7 @@ end
 
 def build_report target
   init_loop_dur = (ENV['BR_LOOP_MINIMUM_DURATION'] || (60 * 2)).to_i # 2 min for default
-  build_timeout = (ENV['BR_BUILD_TIMEOUT'] || 3 * 60 * 60).to_i      # 3 hours for default
+  build_timeout = (ENV['BR_BUILD_TIMEOUT'] || 2 * 60 * 60).to_i      # 2 hours for default
   alert_to      = (ENV['BR_ALERT_TO'] || '')                         # use default
   report_host   = (ENV['BR_REPORT_HOST'] || 'ci.rvm.jp')             # report host
   if /(.+):(\d+)\z/ =~ report_host
@@ -180,7 +157,7 @@ def build_report target
     detail_link: gist_url,
     desc: results.join,
     memo: `uname -a`,
-    timeout: build_timeout,
+    timeout: Integer(build_timeout * 1.5),
     to: alert_to,
   }
 
