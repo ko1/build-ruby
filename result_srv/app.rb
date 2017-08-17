@@ -27,7 +27,7 @@ class ResultServer < Sinatra::Base
   end
 
   def db_write name, **opts
-    p [name, opts[:result]]
+    # p [name, opts[:result]]
     r = Result.new(name: name, **opts)
     r.save
     alert_setup(name, opts[:timeout], opts[:to])
