@@ -6,6 +6,7 @@ gem 'sinatra-activerecord'
 gem 'rake'
 gem 'unicorn'
 gem 'sqlite3'
+gem 'slack-incoming-webhooks'
 
 group :development do
   gem 'shotgun'
