@@ -6,8 +6,9 @@
     <th>Name</th>
     <th>Latest</th>
     <th></th>
-    <th>Stat in last 3 days<br/>errors / tries</th>
     <th>Stat in last 24H<br/>errors / tries</th>
+    <th>Stat in last 3 days<br/>errors / tries</th>
+    <th>Stat in last 7 days<br/>errors / tries</th>
     <th>Errors in last 24H</th>
   </tr>
 
@@ -28,8 +29,9 @@
 	timeout (next alert: <%= Time.at(next_alert_time) %>)
         <% end %>
       </td>
-      <td align='center'><div style='font-family: monospace; white-space: pre;'><%= recent_failures_stat(test.name, 3) %></div></td>
       <td align='center'><div style='font-family: monospace; white-space: pre;'><%= recent_failures_stat(test.name, 1) %></div></td>
+      <td align='center'><div style='font-family: monospace; white-space: pre;'><%= recent_failures_stat(test.name, 3) %></div></td>
+      <td align='center'><div style='font-family: monospace; white-space: pre;'><%= recent_failures_stat(test.name, 7) %></div></td>
       <td>
         <% recent_failures(test.name, 1).each do |result| %>
           [<a href='/results/<%=h result.name %>/<%=h result.id %>'><%=h result.updated_at.strftime('%H:%M') %></a>]
@@ -41,7 +43,8 @@
     <td></td>
     <td>TOTAL</td>
     <td></td>
-    <td align='center'><div style='font-family: monospace; white-space: pre;'><%= recent_failures_stat(nil, 3) %></div></td>
     <td align='center'><div style='font-family: monospace; white-space: pre;'><%= recent_failures_stat(nil, 1) %></div></td>
+    <td align='center'><div style='font-family: monospace; white-space: pre;'><%= recent_failures_stat(nil, 3) %></div></td>
+    <td align='center'><div style='font-family: monospace; white-space: pre;'><%= recent_failures_stat(nil, 7) %></div></td>
   </tr>
 </table>
