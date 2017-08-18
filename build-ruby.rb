@@ -140,7 +140,7 @@ class BuildRuby
             }
           end
         rescue Interrupt, Timeout::Error
-          STDERR.puts $!.to_s
+          STDERR.puts "$$$ #{$!.inspect}"
           require_relative 'psj'
           kill_descendant_with_gdb_info
           raise

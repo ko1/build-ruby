@@ -2,13 +2,13 @@ set height 0
 set width 0
 set confirm off
 
-echo Machine level backtrace\n
+echo >>> Machine level backtrace\n
 thread apply all info stack
 
-echo Dump Ruby level backtrace\n
+echo >>> Dump Ruby level backtrace\n
 call rb_vmdebug_stack_dump_all_threads()
 call fflush(stderr)
 
-echo "Finish\n"
+echo ">>> Finish\n"
 detach
 quit
