@@ -162,7 +162,7 @@ def alert name, result, msg, result_id = nil
       msg: msg,
     }
   else
-    puts cmd
+    puts "#{Time.now} #{cmd}"
     IO.popen(cmd, 'r+'){|io|
       io.puts msg + "\n\n-- \n#{url}"
       io.close_write
