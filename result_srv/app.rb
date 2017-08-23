@@ -164,7 +164,7 @@ def alert name, result, msg, result_id = nil
   else
     puts cmd
     IO.popen(cmd, 'r+'){|io|
-      io.puts msg + "\n\n-- \n{url}"
+      io.puts msg + "\n\n-- \n#{url}"
       io.close_write
       puts io.read
     }
