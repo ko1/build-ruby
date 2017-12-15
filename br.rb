@@ -1,4 +1,3 @@
-
 require 'optparse'
 require 'net/http'
 require 'uri'
@@ -6,12 +5,9 @@ require 'etc'
 require 'socket'
 require 'yaml'
 require 'yaml/store'
+require_relative 'load_env'
 
 cmd = ARGV.shift
-
-WORKING_DIR = File.expand_path(ENV['BUILD_RUBY_WORKING_DIR'] || "~/ruby")
-BUILD_RUBY_SCRIPT = File.join(File.dirname(__FILE__), 'build-ruby.rb')
-PAGER = ENV['PAGER'] || 'less'
 
 def (DummyCollector = Object.new).<<(obj)
   # ignore
