@@ -445,7 +445,7 @@ opt.on('--rm=[all|src|build|install]'){|types|
 opt.on('--no-parallel'){
   opts[:no_parallel] = true
 }
-opt.on('--process-num'){|n|
+opt.on('--process-num=[NUM]'){|n|
   opts[:process_num] = n.to_i
 }
 opt.on('--incremental'){
