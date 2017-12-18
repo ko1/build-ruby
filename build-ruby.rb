@@ -30,6 +30,14 @@ class BuildRuby
     cleanup_build
   }
 
+  def nproc
+    if Etc.respond_to?(:nprocessors)
+      Etc.nprocessors
+    else
+      nil
+    end
+  end
+
   def initialize repository = nil,
                  target_name = nil,
                  repository_type: nil,
@@ -43,6 +51,7 @@ class BuildRuby
                  build_opts: nil,
                  test_opts: nil,
                  no_parallel: false,
+                 process_num: nproc,
                  incremental: false,
                  steps: BUILD_STEPS + TEST_STEPS,
                  exclude_steps: [],
@@ -75,10 +84,9 @@ class BuildRuby
     @TARGET_BUILD_DIR   = File.join(@BUILD_DIR,   build_dir   || @TARGET_NAME)
     @TARGET_INSTALL_DIR = File.join(@INSTALL_DIR, install_dir || @TARGET_NAME)
 
-    if Etc.respond_to?(:nprocessors) && no_parallel == false
-      pn = Etc.nprocessors
-      build_opts ||= "-j#{pn}"
-      test_opts  ||= "TESTS='-j#{pn}'"
+    if process_num && no_parallel == false
+      build_opts ||= "-j#{process_num}"
+      test_opts  ||= "TESTS='-j#{process_num}'"
     end
     @configure_opts = configure_opts || ['--enable-shared']
     @build_opts = build_opts
@@ -436,6 +444,9 @@ opt.on('--rm=[all|src|build|install]'){|types|
 }
 opt.on('--no-parallel'){
   opts[:no_parallel] = true
+}
+opt.on('--process-num'){|n|
+  opts[:process_num] = n.to_i
 }
 opt.on('--incremental'){
   opts[:incremental] = true
