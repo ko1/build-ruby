@@ -146,6 +146,8 @@ memo:
 EOS
 end
 
+$REVS = {}
+
 def alert name, result, msg, result_id = nil
   to = WATCH_LIST.dig(name, :to) || []
   to = %w(ruby-alerts@quickml.atdot.net) if to.empty?
@@ -168,7 +170,17 @@ def alert name, result, msg, result_id = nil
       io.close_write
       puts io.read
     }
-    system("ruby slack-notice.rb '<!here> #{subject}. See #{url}'")
+
+    rev = $1 if /(r\d+)/ =~ subject
+
+    if rev && !$REVS[rev]
+      address = "<!here> "
+      $REVS[rev] = true
+    else
+      address = ''
+    end
+
+    system("ruby slack-notice.rb '#{address}#{subject}. See #{url}'")
   end
 end
 
