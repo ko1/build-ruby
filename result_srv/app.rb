@@ -124,7 +124,7 @@ class TestStatus < ActiveRecord::Base
 
   def self.update_latest(result)
     if test = self.where(name: result.name).first
-      test.update(result: result)
+      test.update(result: result, visible: true)
       test.save
     else
       test = TestStatus.new(name: result.name, visible: true, result: result)
