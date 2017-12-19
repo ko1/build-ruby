@@ -466,13 +466,17 @@ opt.on('--gist'){
 opt.on('--timeout=[TIMEOUT]'){|timeout|
   opts[:timeout] = timeout.to_i
 }
-
 target_name = nil
 opt.on('--target_name=[TARGET_NAME]'){|t|
   target_name = t
 }
 opt.on('--add-path=[ADDITIONAL_PATH]'){|path|
   ENV['PATH'] = [path, ENV['PATH']].join(File::PATH_SEPARATOR)
+}
+opt.on('--add-env=[VAR=VAL]'){|env|
+  val, var = env.split('=')
+  raise "--add-env receives ill-formed env: #{env}" if !val || !var
+  ENV[val] = var
 }
 
 opt.parse!(ARGV)
