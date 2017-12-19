@@ -12,7 +12,7 @@ class ResultServer < Sinatra::Base
 
   # actions
   get '/' do
-    @test_status = TestStatus.all
+    @test_status = TestStatus.index_all
     erb :results
   end
 
@@ -43,7 +43,7 @@ class ResultServer < Sinatra::Base
   end
 
   get '/results/' do
-    @test_status = TestStatus.where(visible: true)
+    @test_status = TestStatus.order(:name)
     erb :results
   end
 
@@ -130,6 +130,10 @@ class TestStatus < ActiveRecord::Base
       test = TestStatus.new(name: result.name, visible: true, result: result)
       test.save
     end
+  end
+
+  def self.index_all
+    self.eager_load(:result).where(visible: true).order(:name)
   end
 end
 
