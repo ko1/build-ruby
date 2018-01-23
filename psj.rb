@@ -1,7 +1,7 @@
 
 def psj
   rel = Hash.new{|h, k| h[k] = []}
-  `ps j`.each_line{|line|
+  `ps jx`.each_line{|line|
     puts line
     if /\A\s*(\d+)\s+(\d+)\s+\d+\s+\d+/ =~ line
       ppid, pid = $1.to_i, $2.to_i

@@ -146,7 +146,7 @@ def build_report target
   ].join("\n"))
 
   # send result
-  gist_url = `gist #{logfile}`
+  gist_url = `gist -p #{logfile}`
   h = {
     name: "#{target}@#{Socket.gethostname}",
     result: result,

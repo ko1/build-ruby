@@ -367,7 +367,7 @@ class BuildRuby
 
   def exit_failure
     STDERR.puts @logfile
-    system("gist #{@logfile}") if @gist
+    system("gist -p #{@logfile}") if @gist
     exit 1
   end
 
