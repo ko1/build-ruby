@@ -112,7 +112,7 @@ end
 
 def build_report target
   init_loop_dur = (ENV['BR_LOOP_MINIMUM_DURATION'] || (60 * 2)).to_i # 2 min for default
-  build_timeout = (ENV['BR_BUILD_TIMEOUT'] || 2 * 60 * 60).to_i      # 2 hours for default
+  build_timeout = (ENV['BR_BUILD_TIMEOUT'] || 3 * 60 * 60).to_i      # 3 hours for default
   alert_to      = (ENV['BR_ALERT_TO'] || '')                         # use default
   report_host   = (ENV['BR_REPORT_HOST'] || 'ci.rvm.jp')             # report host
   if /(.+):(\d+)\z/ =~ report_host
