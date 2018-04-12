@@ -16,6 +16,11 @@ class ResultServer < Sinatra::Base
     erb :results
   end
 
+  get '/latest' do
+    @test_status = TestStatus.index_all_latest
+    erb :results
+  end
+
   def par v
     params[v.to_s]
   end
@@ -134,6 +139,10 @@ class TestStatus < ActiveRecord::Base
 
   def self.index_all
     self.eager_load(:result).where(visible: true).order(:name)
+  end
+
+  def self.index_all_latest
+    self.eager_load(:result).where(visible: true).order('results.updated_at desc')
   end
 end
 
