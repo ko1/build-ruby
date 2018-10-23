@@ -13,33 +13,16 @@ def (DummyCollector = Object.new).<<(obj)
   # ignore
 end
 
-# load TARGETS
-targets_yaml = File.join(WORKING_DIR, 'targets.yaml')
-if File.exist?(targets_yaml)
-  TARGETS = YAML.load(File.read(targets_yaml))
-else
-  TARGETS = {}
-end
-Dir.glob(File.join(WORKING_DIR, '*.br')){|file|
-  target = File.basename(file, '.br')
-  TARGETS[target] = File.read(file)
-}
-
-# setup params
-TARGETS.each{|target, config|
-  TARGETS[target] = config ? config.split("\n") : []
-}
-
-def build target, extra_opts: ARGV, result_collector: DummyCollector, build_timeout: (60 * 60 * 2) # 2 hours
+def build target_name, extra_opts: ARGV, result_collector: DummyCollector, build_timeout: (60 * 60 * 2) # 2 hours
   opts = []
   # opts by default
-  opts << "--target_name=#{target}"
-  logfile = File.join(WORKING_DIR, 'logs', "brlog.#{target}.#{Time.now.strftime('%Y%m%d-%H%M%S')}")
+  opts << "--target_name=#{target_name}"
+  logfile = File.join(WORKING_DIR, 'logs', "brlog.#{target_name}.#{Time.now.strftime('%Y%m%d-%H%M%S')}")
   opts << "--logfile=#{logfile}"
   opts << "--timeout=#{build_timeout}"
 
   # opts from config file
-  opts.concat(TARGETS[target])
+  opts.concat(TARGETS[target_name].arg.split(/\n/))
 
   # opts from command line
   opts.concat extra_opts
@@ -110,26 +93,25 @@ def check_logfile logfile
   r
 end
 
-def build_report target
-  init_loop_dur = (ENV['BR_LOOP_MINIMUM_DURATION'] || (60 * 2)).to_i # 2 min for default
-  build_timeout = (ENV['BR_BUILD_TIMEOUT'] || 3 * 60 * 60).to_i      # 3 hours for default
-  alert_to      = (ENV['BR_ALERT_TO'] || '')                         # use default
-  report_host   = (ENV['BR_REPORT_HOST'] || 'ci.rvm.jp')             # report host
-  if /(.+):(\d+)\z/ =~ report_host
+def build_report target_name
+  target = TARGETS[target_name]
+
+  if /(.+):(\d+)\z/ =~ target.report_host
     report_host = $1
     report_port = $2.to_i
   else
+    report_host = target.report_host
     report_port = 80
   end
 
   state_db = YAML::Store.new(File.join(WORKING_DIR, 'state.yaml'))
   state = nil
   state_db.transaction do
-    state = state_db[target] || {loop_dur: init_loop_dur, failure: 0}
+    state = state_db[target] || {loop_dur: target.loop_minimum_duration, failure: 0}
   end
 
   start = Time.now
-  result, logfile = build target, result_collector: results = [], build_timeout: build_timeout
+  result, logfile = build target_name, result_collector: results = [], build_timeout: target.build_timeout
   puts result
 
   # check log file
@@ -146,15 +128,21 @@ def build_report target
   ].join("\n"))
 
   # send result
-  gist_url = `gist -p #{logfile}`
+  begin
+    gist_url = `gist -p #{logfile}`
+  rescue Errno::ENOENT => e
+    p e
+    gist_url = nil
+  end
+
   h = {
-    name: "#{target}@#{Socket.gethostname}",
+    name: "#{target_name}@#{Socket.gethostname}",
     result: result,
     detail_link: gist_url,
     desc: results.join,
     memo: `uname -a`,
-    timeout: Integer(build_timeout * 1.5),
-    to: alert_to,
+    timeout: Integer(target.build_timeout * 1.5),
+    to: target.alert_to,
   }
 
   begin
@@ -166,17 +154,17 @@ def build_report target
 
   # cleanup
   if /OK/ =~ result
-    state[:loop_dur] = init_loop_dur
+    state[:loop_dur] = target.loop_minimum_duration
     state[:failure] = 0
   else
-    clean_all target if state[:failure] > 0
+    clean_all target_name if state[:failure] > 0
     state[:failure]  += 1
     state[:loop_dur] += 60 if state[:loop_dur] < 60 * 60 * 3 # 1 hour
   end
 
   # store last state.
   state_db.transaction do
-    state_db[target] = state
+    state_db[target_name] = state
   end
 
   sleep_time = state[:loop_dur] - (Time.now.to_i - start.to_i)
@@ -186,7 +174,7 @@ def build_report target
   end
 end
 
-def run target
+def run target_name
   raise "run is unsupported yet"
 end
 
@@ -195,15 +183,15 @@ when nil, '-h', '--help'
   puts <<EOS
 br.rb: supported commands
   * list
-  * build [target]
+  * build [target_name]
   * build_all
-  * run [target]
+  * run [target_name]
   * run_all
 EOS
 
 when 'list'
-  TARGETS.each{|target, config|
-    puts '%-20s - %s' % [target, config]
+  TARGETS.each{|target_name, config|
+    puts '%-20s - %s' % [target_name, config.arg]
   }
 when 'build'
   result, logfile = build ARGV.shift || raise('build target is not provided')
@@ -214,16 +202,33 @@ when 'build_report'
   build_report ARGV.shift || raise('build target is not provided')
 when 'build_all'
   pattern = ARGV.shift if ARGV[0] && ARGV[0] !~ /--/
-  TARGETS.each{|target, config|
-    next if pattern && Regexp.compile(pattern) !~ target
-    build target
+  TARGETS.each{|target_name, config|
+    next if pattern && Regexp.compile(pattern) !~ target_name
+    build target_name
   }
 when 'run'
   run ARGV.shift
 when 'run_all'
-  TARGETS.each{|target, config|
-    run target
+  TARGETS.each{|target_name, config|
+    run target_name
   }
+when 'update_default_targets'
+  branches = `svn ls https://svn.ruby-lang.org/repos/ruby/branches`.each_line.map{|line|
+    [$1, "https://svn.ruby-lang.org/repos/ruby/branches/#{$1}"] if /^(ruby_.+)\// =~ line
+  }.compact
+  tags = `svn ls https://svn.ruby-lang.org/repos/ruby/tags`.each_line.map{|line|
+    [$1, "https://svn.ruby-lang.org/repos/ruby/tags/#{$1}"] if /^(v.+)\// =~ line
+  }.compact
+  open(File.join(__dir__, 'default_targets.yaml'), 'w'){|f|
+    f.puts "trunk:"
+    branches.each{|n, u|
+      f.puts "#{n}: #{u}"
+    }
+    tags.each{|n, u|
+      f.puts "#{n}: #{u}"
+    }
+  }
+  puts "update: #{branches.size} branches, #{tags.size} tags"
 else
   raise "#{cmd} is not supported"
 end
