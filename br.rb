@@ -168,6 +168,10 @@ def build_report target_name
   end
 
   sleep_time = state[:loop_dur] - (Time.now.to_i - start.to_i)
+
+  # introduce randomness
+  sleep_time += 60 - rand(120)
+
   if sleep_time > 0
     puts "sleep: #{sleep_time}"
     sleep sleep_time
