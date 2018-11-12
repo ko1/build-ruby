@@ -107,7 +107,12 @@ def build_report target_name
   state_db = YAML::Store.new(File.join(WORKING_DIR, 'state.yaml'))
   state = nil
   state_db.transaction do
-    state = state_db[target] || {loop_dur: target.loop_minimum_duration, failure: 0}
+    state = state_db[target] || {
+      loop_dur: target.loop_minimum_duration,
+      failure: 0,
+      total_success: 0,
+      total_failure: 0,
+    }
   end
 
   start = Time.now
@@ -156,10 +161,12 @@ def build_report target_name
   if /OK/ =~ result
     state[:loop_dur] = target.loop_minimum_duration
     state[:failure] = 0
+    state[:total_success] += 1
   else
     clean_all target_name if state[:failure] > 0
     state[:failure]  += 1
     state[:loop_dur] += 60 if state[:loop_dur] < 60 * 60 * 3 # 1 hour
+    state[:total_failure] += 1
   end
 
   # store last state.
