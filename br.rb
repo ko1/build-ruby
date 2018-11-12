@@ -107,7 +107,7 @@ def build_report target_name
   state_db = YAML::Store.new(File.join(WORKING_DIR, 'state.yaml'))
   state = nil
   state_db.transaction do
-    state = state_db[target] || {
+    state = state_db[target_name] || {
       loop_dur: target.loop_minimum_duration,
       failure: 0,
       total_success: 0,
