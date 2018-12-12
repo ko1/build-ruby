@@ -17,8 +17,9 @@ def build target_name, extra_opts: ARGV, result_collector: DummyCollector, build
   opts = []
   # opts by default
   opts << "--target_name=#{target_name}"
-  logfile = File.join(WORKING_DIR, 'logs', "brlog.#{target_name}.#{Time.now.strftime('%Y%m%d-%H%M%S')}")
+  logfile = File.join(CONFIG_DIR, 'logs', "brlog.#{target_name}.#{Time.now.strftime('%Y%m%d-%H%M%S')}")
   opts << "--logfile=#{logfile}"
+  opts << "--root_dir=#{WORKING_DIR}"
   opts << "--timeout=#{build_timeout}"
 
   # opts from config file
@@ -49,7 +50,7 @@ def build target_name, extra_opts: ARGV, result_collector: DummyCollector, build
 end
 
 def clean_all target
-  build target, extra_opts: ['--rm=all']
+  build target, extra_opts: ['--rm=all', "--root_dir=#{WORKING_DIR}"]
 end
 
 def check_logfile logfile
@@ -104,7 +105,7 @@ def build_report target_name
     report_port = 80
   end
 
-  state_db = YAML::Store.new(File.join(WORKING_DIR, 'state.yaml'))
+  state_db = YAML::Store.new(File.join(CONFIG_DIR, 'state.yaml'))
   state = nil
   state_db.transaction do
     state = state_db[target_name] || {

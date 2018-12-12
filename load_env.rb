@@ -1,5 +1,7 @@
 
+CONFIG_DIR  = File.expand_path(ENV['BUILD_RUBY_CONFIG_DIR']  || "~/ruby")
 WORKING_DIR = File.expand_path(ENV['BUILD_RUBY_WORKING_DIR'] || "~/ruby")
+
 BUILD_RUBY_SCRIPT = File.join(File.dirname(__FILE__), 'build-ruby.rb')
 PAGER = ENV['PAGER'] || 'less'
 
@@ -12,9 +14,9 @@ def merge_targets yaml
 end
 
 merge_targets File.join(__dir__, 'default_targets.yaml')
-merge_targets File.join(WORKING_DIR, 'targets.yaml')
+merge_targets File.join(CONFIG_DIR, 'targets.yaml')
 
-Dir.glob(File.join(WORKING_DIR, '*.br')){|file|
+Dir.glob(File.join(CONFIG_DIR, '*.br')){|file|
   target = File.basename(file, '.br')
   TARGETS[target] = File.read(file)
 }
