@@ -15,6 +15,7 @@ ruby_2_2: https://svn.ruby-lang.org/repos/ruby/branches/ruby_2_2
 ruby_2_3: https://svn.ruby-lang.org/repos/ruby/branches/ruby_2_3
 ruby_2_4: https://svn.ruby-lang.org/repos/ruby/branches/ruby_2_4
 ruby_2_5: https://svn.ruby-lang.org/repos/ruby/branches/ruby_2_5
+ruby_2_6: https://svn.ruby-lang.org/repos/ruby/branches/ruby_2_6
 v0_7_1: https://svn.ruby-lang.org/repos/ruby/tags/v0_7_1
 v0_7_3: https://svn.ruby-lang.org/repos/ruby/tags/v0_7_3
 v1_0: https://svn.ruby-lang.org/repos/ruby/tags/v1_0
@@ -318,5 +319,9 @@ v2_5_0_rc1: https://svn.ruby-lang.org/repos/ruby/tags/v2_5_0_rc1
 v2_5_1: https://svn.ruby-lang.org/repos/ruby/tags/v2_5_1
 v2_5_2: https://svn.ruby-lang.org/repos/ruby/tags/v2_5_2
 v2_5_3: https://svn.ruby-lang.org/repos/ruby/tags/v2_5_3
+v2_6_0: https://svn.ruby-lang.org/repos/ruby/tags/v2_6_0
 v2_6_0_preview1: https://svn.ruby-lang.org/repos/ruby/tags/v2_6_0_preview1
 v2_6_0_preview2: https://svn.ruby-lang.org/repos/ruby/tags/v2_6_0_preview2
+v2_6_0_preview3: https://svn.ruby-lang.org/repos/ruby/tags/v2_6_0_preview3
+v2_6_0_rc1: https://svn.ruby-lang.org/repos/ruby/tags/v2_6_0_rc1
+v2_6_0_rc2: https://svn.ruby-lang.org/repos/ruby/tags/v2_6_0_rc2
