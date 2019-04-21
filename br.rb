@@ -73,10 +73,12 @@ def check_logfile logfile
       when /INFO -- : \$\$\$\[end\] (.+)/ =~ line
         r[:exit_results] << $1
       when !r[:rev] && /INFO -- : At revision (\d+)\./ =~ line
-        r[:rev] = $1
+        r[:rev] = "r#{$1}"
       when !r[:rev] && /INFO -- : Updated to revision (\d+)\./ =~ line
-        r[:rev] = $1
+        r[:rev] = "r#{$1}"
       # INFO -- : 17057 tests, 4935260 assertions, 0 failures, 0 errors, 76 skips
+      when !r[:rev] && /INFO -- : Latest commit hash = (.+)/ =~ line
+        r[:rev] = $1
       when /test-all/ =~ cmd && /INFO -- : (\d+ tests?, \d+ assertions?, \d+ failures?, \d+ errors?, \d+ skips?)/ =~ line
         r[:test_all] = $1
       when /test-all/ =~ cmd && /INFO -- (:   \d+\))/ =~ line
@@ -122,7 +124,7 @@ def build_report target_name
 
   # check log file
   r = check_logfile(logfile)
-  result = "#{result} (r#{r[:rev]})" if r[:rev]
+  result = "#{result} (#{r[:rev]})" if r[:rev]
   results.unshift(*[
     "rev: #{r[:rev]}",
     "test-all : #{r[:test_all]}",
