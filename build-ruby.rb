@@ -61,7 +61,7 @@ class BuildRuby
                  timeout: nil
     #
     @REPOSITORY      = repository      || 'https://github.com/ruby/ruby.git'
-      # 'https://svn.ruby-lang.org/repos/ruby/trunk'
+    # svn: 'https://svn.ruby-lang.org/repos/ruby/trunk'
     @REPOSITORY_TYPE = (repository_type || find_repository_type(@REPOSITORY)).to_sym
 
     @git_branch = git_branch
@@ -78,7 +78,7 @@ class BuildRuby
                      basename
                    end
 
-    @SRC_DIR     = File.expand_path(File.join(root_dir, 'src', @REPOSITORY_TYPE.to_s))
+    @SRC_DIR     = File.expand_path(File.join(root_dir, 'src'))
     @BUILD_DIR   = File.expand_path(File.join(root_dir, 'build'))
     @INSTALL_DIR = File.expand_path(File.join(root_dir, 'install'))
     @TARGET_SRC_DIR     = File.join(@SRC_DIR,     src_dir     || @TARGET_NAME)
