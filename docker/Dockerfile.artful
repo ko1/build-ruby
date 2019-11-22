@@ -1,0 +1,30 @@
+FROM ubuntu:artful
+MAINTAINER Koichi Sasada
+
+RUN apt-get update && \
+  apt-get install -y gcc gcc-4.8 gcc-5 gcc-6 gcc-7 && \
+  apt-get install -y clang-3.8 clang-3.9 clang-4.0 clang-5.0 && \
+  apt-get install -y ruby subversion autoconf bison make git && \
+  apt-get install -y libgmp-dev libssl-dev zlib1g-dev libffi-dev libreadline-dev libgdbm-dev && \
+  apt-get install -y vim-tiny gdb tzdata libjemalloc-dev && \
+  rm -rf /var/lib/apt/lists/*
+
+RUN gem install gist
+
+RUN sed -ie 's/= 1$/= 0/g' /etc/sysctl.d/10-ptrace.conf
+
+# add user
+RUN mkdir /home/tester && \
+    groupadd -g 1000 dev && \
+    useradd -g dev -G sudo -s /bin/bash tester && \
+    echo 'tester:tester' | chpasswd && \
+    chown tester /home/tester
+
+RUN mkdir /home/ko1 && \
+    useradd -g dev -G sudo -s /bin/bash -u 1001 ko1 && \
+    echo 'ko1:ko1' | chpasswd && \
+    chown ko1 /home/ko1
+
+COPY .gist /home/ko1/.gist
+RUN chmod 600 /home/ko1/.gist && chown ko1 /home/ko1/.gist
+

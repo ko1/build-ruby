@@ -1,0 +1,27 @@
+FROM ubuntu:xenial
+MAINTAINER Koichi Sasada
+
+RUN apt-get update && apt-get install -y \
+  ruby subversion autoconf bison gcc make git \
+  libgmpv4-dev \
+  libssl-dev zlib1g-dev libffi-dev libreadline-dev libgdbm-dev \
+  vim-tiny gdb tzdata && \
+  # rm -rf /var/lib/apt/lists/*
+
+RUN gem install gist
+
+# add user
+RUN mkdir /home/tester && \
+    groupadd -g 1000 dev && \
+    useradd -g dev -G sudo -s /bin/bash tester && \
+    echo 'tester:tester' | chpasswd && \
+    chown tester /home/tester
+
+RUN mkdir /home/ko1 && \
+    useradd -g dev -G sudo -s /bin/bash -u 1001 ko1 && \
+    echo 'ko1:ko1' | chpasswd && \
+    chown ko1 /home/ko1
+
+COPY .gist /home/ko1/.gist
+RUN chmod 600 /home/ko1/.gist && chown ko1 /home/ko1/.gist
+
