@@ -1,3 +1,9 @@
+# CI special env
+if e = ENV['RUBY_DEBUG']
+  ENV['RUBY_DEBUG'] = "#{e},ci'"
+else
+  ENV['RUBY_DEBUG'] = 'ci'
+end
 
 CONFIG_DIR  = File.expand_path(ENV['BUILD_RUBY_CONFIG_DIR']  || "~/ruby")
 WORKING_DIR = File.expand_path(ENV['BUILD_RUBY_WORKING_DIR'] || "~/ruby")
