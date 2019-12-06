@@ -108,6 +108,7 @@ class BuildRuby
     logfile ||= "log.build-ruby.#{@TARGET_NAME}.#{Time.now.strftime('%Y%m%d-%H%M%S')}"
 
     @logfile = logfile
+    @ruby_env = ENV.find_all{|k, v| /\ARUBY/ =~ k}
   end
 
   def find_repository_type repository
