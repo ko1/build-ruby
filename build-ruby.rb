@@ -225,6 +225,7 @@ class BuildRuby
   def build_up
     builddir{
       cmd "rm -f .revision.time" # to check correct rev.
+      cmd "make update-unicode  #{@build_opts}", on_failure: :ignore
       cmd "make update-download #{@build_opts}", on_failure: :ignore
       cmd "make update-rubyspec #{@build_opts}", on_failure: :ignore if @steps.include?('test_rubyspec')
       cmd "make update-src      #{@build_opts}", on_failure: :ignore unless @svn_revision
