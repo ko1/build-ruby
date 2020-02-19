@@ -38,7 +38,9 @@ tests = %w(trunk_gcc4 trunk_gcc5 trunk_gcc6 trunk_gcc7 trunk_gcc8 trunk_gcc9
            trunk-no-mjit
            trunk-iseq_binary
            trunk-iseq_binary-nopara
+           trunk-gc_compact
            trunk-O0
+           trunk-cross-mingw64
         )
 
 # clean

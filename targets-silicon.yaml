@@ -49,7 +49,7 @@ trunk-asserts-nopara: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1"'
 trunk-gc-asserts:     --build_opts='DEFS="-DRGENGC_CHECK_MODE=2"'                              --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
 trunk-vm-asserts:     --build_opts='DEFS="-DVM_CHECK_MODE=2"'
 trunk-mjit:           --configure_opts=cppflags="-DMJIT_FORCE_ENABLE"                          --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
-trunk-mjit-wait:      --configure_opts=cppflags="-DMJIT_FORCE_ENABLE"                          --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30 --add-env=RUN_OPTS="--disable-gems --jit-wait --jit-warnings -jit-min-calls=5"
+trunk-mjit-wait:      --configure_opts=cppflags="-DMJIT_FORCE_ENABLE"                          --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30 --test_opts='RUN_OPTS="--disable-gems --jit-wait --jit-warnings --jit-min-calls=5"'
 trunk-no-mjit:
   arg: --configure_opts='--disable-jit-support'
   loop_minimum_duration: 3600
