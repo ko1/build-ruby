@@ -217,11 +217,10 @@ def notify_simpler_alerts name, url, result
       url: url,
       commit: match[:commit],
     }
-    Net::HTTP.post(
-      URI.parse(ENV['SIMPLER_ALERTS_URL']),
-      JSON.generate(params),
-      "Content-Type" => "application/json"
-    )
+    uri = URI.parse(ENV['SIMPLER_ALERTS_URL'])
+    Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https') do |http|
+      http.post(uri.path, JSON.generate(params), { "Content-Type" => "application/json" })
+    end
   end
 end
 
