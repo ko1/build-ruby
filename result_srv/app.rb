@@ -1,6 +1,10 @@
 require 'bundler'
 Bundler.require
 
+require 'json'
+require 'net/http'
+require 'uri'
+
 Time.zone = "Tokyo"
 ActiveRecord::Base.default_timezone = :local
 
@@ -194,6 +198,7 @@ def alert name, result, msg, result_id = nil
     end
 
     system("ruby slack-notice.rb '#{address}#{subject}. See #{url}'")
+    notify_simpler_alerts(name, url, result)
   end
 end
 
@@ -202,6 +207,21 @@ def alert_setup name, timeout_str, to
   to = to.split(/[, ]+/) if to
 
   WATCH_LIST[name] = {timeout: timeout, alerted: false, to: to}
+end
+
+def notify_simpler_alerts name, url, result
+  if ENV.key?('SIMPLER_ALERTS_URL') && match = result.match(/\ANG \((?<commit>[^)]+)\)\z/)
+    params = {
+      ci: "ci.rvm.jp",
+      env: name,
+      url: url,
+      commit: match[:commit],
+    }
+    uri = URI.parse(ENV['SIMPLER_ALERTS_URL'])
+    Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https') do |http|
+      http.post(uri.path, JSON.generate(params), { "Content-Type" => "application/json" })
+    end
+  end
 end
 
 # timeout alert
