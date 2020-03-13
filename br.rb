@@ -137,7 +137,7 @@ def build_report target_name
 
   # send result
   begin
-    gist_url = `gist -p #{logfile}`
+    gist_url = nil # `gist -p #{logfile}`
   rescue Errno::ENOENT => e
     p e
     gist_url = nil
