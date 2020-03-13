@@ -136,21 +136,18 @@ def build_report target_name
   ].join("\n"))
 
   # send result
-  begin
-    gist_url = nil # `gist -p #{logfile}`
-  rescue Errno::ENOENT => e
-    p e
-    gist_url = nil
-  end
 
   h = {
     name: "#{target_name}@#{Socket.gethostname}",
     result: result,
-    detail_link: gist_url,
     desc: results.join,
     memo: `uname -a`,
     timeout: Integer(target.build_timeout * 1.5),
     to: target.alert_to,
+
+    # logfile
+    detail_link: File.basename(logfile),
+    details: open(logfile).read,
   }
 
   begin

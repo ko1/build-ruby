@@ -46,8 +46,23 @@ class ResultServer < Sinatra::Base
 
   put '/results' do
     name = par:name
-    opts = params_set(:result, :desc, :detail_link, :memo)
+
+    # receive
+    opts = params_set(:result, :desc, :detail_link, :memo, :details)
+
+    # write to file
+    details = opts.delete(:details)
+    name    = opts.delete(detail_link)
+
+    open("logfiles/#{name}", 'w'){|f|
+      f.puts details
+    }
+
+    opts[:detail_link] = "http://ci.rvm.jp/logfiles/#{name}"
+
+    # write to DB
     result_id = db_write(name, **opts)
+
     "http://ci.rvm.jp/results/#{name}/#{result_id}"
   end
 
