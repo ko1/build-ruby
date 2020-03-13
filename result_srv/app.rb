@@ -52,7 +52,7 @@ class ResultServer < Sinatra::Base
 
     # write to file
     details = opts.delete(:details)
-    name    = opts.delete(detail_link)
+    name    = opts.delete(:detail_link)
 
     open("logfiles/#{name}", 'w'){|f|
       f.puts details
