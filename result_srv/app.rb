@@ -25,6 +25,16 @@ class ResultServer < Sinatra::Base
     erb :results
   end
 
+  get '/logfiles/:name' do
+    name = params['name']
+    content_type 'text/plain'
+    begin
+      File.read("logfiles/#{name}")
+    rescue
+      'not found...'
+    end
+  end
+
   def par v
     params[v.to_s]
   end
@@ -52,13 +62,16 @@ class ResultServer < Sinatra::Base
 
     # write to file
     details = opts.delete(:details)
-    name    = opts.delete(:detail_link)
+    logname = opts.delete(:detail_link)
 
-    open("logfiles/#{name}", 'w'){|f|
-      f.puts details
-    }
-
-    opts[:detail_link] = "http://ci.rvm.jp/logfiles/#{name}"
+    if details && logname
+      open("logfiles/#{logname}", 'w'){|f|
+        f.puts details
+      }
+      opts[:detail_link] = "http://ci.rvm.jp/logfiles/#{logname}"
+    else
+      p name: name, details: details, logname: logname
+    end
 
     # write to DB
     result_id = db_write(name, **opts)
