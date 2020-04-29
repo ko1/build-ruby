@@ -78,7 +78,7 @@ class BuildRuby
                      basename
                    end
 
-    root_dir = File.join(root_dir, 'v2')
+    root_dir = File.join(root_dir, 'v3')
 
     @SRC_DIR     = File.expand_path(File.join(root_dir, 'src'))
     @BUILD_DIR   = File.expand_path(File.join(root_dir, 'build'))
