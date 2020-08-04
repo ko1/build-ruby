@@ -1,6 +1,7 @@
 
 def psj
   rel = Hash.new{|h, k| h[k] = []}
+  puts "$$$ ps jx"
   `ps jx`.each_line{|line|
     puts line
     if /\A\s*(\d+)\s+(\d+)\s+\d+\s+\d+/ =~ line

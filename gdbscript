@@ -2,6 +2,9 @@ set height 0
 set width 0
 set confirm off
 
+echo >>> Threads
+info threads
+
 echo >>> Machine level backtrace\n
 thread apply all info stack
 

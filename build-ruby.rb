@@ -157,6 +157,8 @@ class BuildRuby
           end
         rescue Interrupt, Timeout::Error
           STDERR.puts "$$$ #{$!.inspect}"
+          STDERR.puts "### enter analyzing mode for stuck processes"
+          STDERR.puts
           require_relative 'psj'
           kill_descendant_with_gdb_info
           raise
