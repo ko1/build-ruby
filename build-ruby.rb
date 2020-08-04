@@ -55,6 +55,7 @@ class BuildRuby
                  incremental: false,
                  steps: BUILD_STEPS + TEST_STEPS,
                  exclude_steps: [],
+                 add_steps: [],
                  logfile: nil,
                  quiet: false,
                  gist: false,
@@ -98,6 +99,9 @@ class BuildRuby
 
     exclude_steps.each{|step|
       steps.delete(step)
+    }
+    add_steps.each{|step|
+      steps << step
     }
 
     @steps = steps
@@ -294,6 +298,12 @@ class BuildRuby
     }
   end
 
+  def check_tmp
+    builddir{
+      cmd "ls -R /tmp"
+    }
+  end
+
   def cleanup_src
     remove [:src]
   end
@@ -434,6 +444,9 @@ opt.on('--steps=["STEP1 STEP2..."]'){|steps|
 }
 opt.on('--exclude-steps=["STEP1 STEP2..."]'){|steps|
   opts[:exclude_steps] = steps.split(/\s+/)
+}
+opt.on('--add-steps=["STEP1 STEP2..."]'){|steps|
+  opts[:add_steps] = steps.split(/\s+/)
 }
 opt.on('--logfile=[LOGFILE]'){|logfile|
   opts[:logfile] = logfile
