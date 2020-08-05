@@ -302,7 +302,7 @@ class BuildRuby
 
   def check_tmp
     builddir{
-      cmd "ls -R /tmp"
+      cmd "ls /tmp/_ruby*"
     }
   end
 
