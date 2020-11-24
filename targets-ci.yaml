@@ -76,6 +76,21 @@ trunk-cross-mingw64:
   loop_minimum_duration: 3600
 trunk-gc_compact:
   arg: --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30 --add-env=RUBY_TEST_GC_COMPACT=1
-trunk-repeat:
-  arg: --no-parallel --test_opts=TESTS=--repeat-count=50
+trunk-random0: --test_opts='TESTS="--test-order=random"'
+trunk-random1: --test_opts='TESTS="--test-order=random"'
+trunk-random2: --test_opts='TESTS="--test-order=random"'
+trunk-random3: --test_opts='TESTS="--test-order=random --exclude=readline --exclude=reline"'
+trunk-random4: --test_opts='TESTS="--test-order=random --exclude=readline --exclude=reline"'
+trunk-random5: --test_opts='TESTS="--test-order=random --exclude=readline --exclude=reline"'
+trunk-random6: --test_opts='TESTS="--test-order=random --exclude=readline --exclude=reline"'
+trunk-random7: --test_opts='TESTS="--test-order=random --exclude=readline --exclude=reline"'
+trunk-repeat20:
+  arg: --test_opts='TESTS=--repeat-count=20'
+  build_timeout: 41600
+trunk-repeat50:
+  arg: --test_opts='TESTS=--repeat-count=50'
+  build_timeout: 208000
+trunk-random-repeat:
+  arg: --test_opts='TESTS="--repeat-count=20 --test-order=random"'
+  build_timeout: 41600
 

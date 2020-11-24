@@ -22,6 +22,9 @@ end
 
 if ARGV.empty?
 
+=begin
+# old silicon setting
+
            # trunk-asserts-nopara 
 tests = {
   'rubydev:bionic' =>
@@ -47,7 +50,27 @@ tests = {
 	   trunk_clang_9 trunk_clang_10
         ),
 }
+=end
+#
+tests = {
+  'rubydev:focal' => %w{
+    trunk-random0
+    trunk-random1
+    trunk-random2
+    trunk-random3
+    trunk-repeat20
+    trunk-repeat50
+    trunk-random-repeat
 
+    trunk-asserts
+    trunk-mjit
+    trunk-mjit-wait
+    trunk-no-mjit
+    trunk-iseq_binary
+    trunk-O0
+    trunk-cross-mingw64
+  },
+}
 
 # clean
 if ENV['CLEAN_ALL'] == 'true'
