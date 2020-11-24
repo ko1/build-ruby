@@ -19,6 +19,13 @@ class BuildRuby
     build_all
     build_install
   }
+  BUILD_ALL_STEPS = %w{
+    checkout
+    autoconf
+    configure
+    build_all
+    build_install
+  }
   TEST_STEPS = %w{
     test_btest
     test_basic
@@ -42,6 +49,7 @@ class BuildRuby
                  target_name = nil,
                  repository_type: nil,
                  git_branch: nil,
+                 git_worktree: nil,
                  svn_revision: nil,
                  root_dir: "~/ruby",
                  src_dir: nil,
@@ -66,6 +74,7 @@ class BuildRuby
     @REPOSITORY_TYPE = (repository_type || find_repository_type(@REPOSITORY)).to_sym
 
     @git_branch = git_branch
+    @git_worktree = git_worktree
     @svn_revision = svn_revision
     basename = File.basename(@REPOSITORY)
 
@@ -79,7 +88,10 @@ class BuildRuby
                      basename
                    end
 
-    root_dir = File.join(root_dir, 'v3')
+    root_dir_prefix = ENV['BR_ROOTDIR'] || 'v3'
+    if !root_dir_prefix.empty?
+      root_dir = File.join(root_dir, root_dir_prefix)
+    end
 
     @SRC_DIR     = File.expand_path(File.join(root_dir, 'src'))
     @BUILD_DIR   = File.expand_path(File.join(root_dir, 'build'))
@@ -113,6 +125,14 @@ class BuildRuby
 
     @logfile = logfile
     @ruby_env = ENV.find_all{|k, v| /\ARUBY/ =~ k}
+
+    case RUBY_PLATFORM
+    when /mswin/
+      @make = 'nmake'
+      @build_opts = ''
+    else
+      @make = 'make'
+    end
   end
 
   def find_repository_type repository
@@ -196,7 +216,10 @@ class BuildRuby
           cmd 'svn', 'checkout', '-q', @REPOSITORY, @TARGET_NAME
         end
       when :git
-        if @git_branch
+        case
+        when @git_worktree
+          cmd 'git', '-C', @git_worktree, 'worktree', 'add', File.join(@SRC_DIR, @TARGET_NAME), @git_branch
+        when @git_branch
           cmd 'git', 'clone', '--depth', '1', '-b', @git_branch, '--single-branch', @REPOSITORY, @TARGET_NAME
         else
           cmd 'git', 'clone', '--depth', '1', @REPOSITORY, @TARGET_NAME
@@ -212,7 +235,7 @@ class BuildRuby
       unless File.exist?('configure')
         cmd 'autoconf'
       end
-    }
+    } if RUBY_PLATFORM !~ /win/
   end
 
   def builddir
@@ -224,79 +247,83 @@ class BuildRuby
   def configure
     builddir{
       unless File.exist? File.join(@TARGET_BUILD_DIR, 'Makefile')
-        cmd File.join(@TARGET_SRC_DIR, 'configure'), "--prefix=#{@TARGET_INSTALL_DIR}", '--disable-install-doc', *@configure_opts
+        if RUBY_PLATFORM !~ /win/
+          cmd File.join(@TARGET_SRC_DIR, 'configure'), "--prefix=#{@TARGET_INSTALL_DIR}", '--disable-install-doc', *@configure_opts
+        else
+          cmd File.join(@TARGET_SRC_DIR, 'win32/configure.bat'), "--prefix=#{@TARGET_INSTALL_DIR}", '--disable-install-doc', *@configure_opts
+        end
       end
     }
   end
 
   def build_up
     builddir{
-      cmd "rm -f .revision.time" # to check correct rev.
-      cmd "make update-unicode  #{@build_opts}", on_failure: :ignore
-      cmd "make update-download #{@build_opts}", on_failure: :ignore
-      cmd "make update-rubyspec #{@build_opts}", on_failure: :ignore if @steps.include?('test_rubyspec')
-      cmd "make update-src      #{@build_opts}", on_failure: :ignore unless @svn_revision
-      cmd "make after-update    #{@build_opts}", on_failure: :ignore
+      FileUtils.rm_f('.revision.time') # to check correct rev.
+      cmd "#{@make} update-unicode  #{@build_opts}", on_failure: :ignore
+      cmd "#{@make} update-download #{@build_opts}", on_failure: :ignore
+      cmd "#{@make} update-rubyspec #{@build_opts}", on_failure: :ignore if @steps.include?('test_rubyspec')
+      cmd "#{@make} update-src      #{@build_opts}", on_failure: :ignore unless @svn_revision
+      cmd "#{@make} after-update    #{@build_opts}", on_failure: :ignore
     }
   end
 
   def build_miniruby
     builddir{
-      cmd "make miniruby #{@build_opts}"
+      cmd "#{@make} miniruby #{@build_opts}"
     }
   end
 
   def build_ruby
     builddir{
-      cmd "make ruby #{@build_opts}"
+      cmd "#{@make} ruby #{@build_opts}"
     }
   end
 
   def build_exts
     builddir{
-      cmd "make exts #{@build_opts}", on_failure: :ignore
+      cmd "#{@make} exts #{@build_opts}", on_failure: :ignore
     }
   end
 
   def build_all
     builddir{
-      cmd "make all #{@build_opts}"
+      cmd "#{@make} all #{@build_opts}"
     }
   end
 
   def build_install
     builddir{
-      cmd "make install #{@build_opts}"
+      cmd "#{@make} install #{@build_opts}"
     }
   end
 
   def check
     builddir{
-      cmd "make check #{@test_opts}"
+      cmd "#{@make} check #{@test_opts}"
     }
   end
 
   def test_btest
     builddir{
-      cmd "make yes-btest #{@test_opts}", on_failure: :skip
+      cmd "#{@make} yes-btest #{@test_opts}", on_failure: :skip
     }
   end
 
   def test_basic
     builddir{
-      cmd "make yes-test-basic #{@test_opts}", on_failure: :skip
+      cmd "#{@make} yes-test-basic #{@test_opts}", on_failure: :skip
     }
   end
 
   def test_all
     builddir{
-      cmd "make yes-test-all #{@test_opts}", on_failure: :skip
+      cmd "#{@make} yes-test-all #{@test_opts}", on_failure: :skip
     }
   end
 
   def test_rubyspec
     builddir{
-      cmd "make yes-test-rubyspec #{@test_opts}", on_failure: :skip
+      cmd "#{@make} yes-test-rubyspec #{@test_opts}", on_failure: :skip
     }
   end
 
@@ -415,8 +442,11 @@ opt = OptionParser.new
 opt.on('--repository_type=[TYPE]'){|type|
   opts[:repository_type] = type
 }
-opt.on('-b', '--git_branch=[BRANCH_NAME]'){|b|
+opt.on('-b [BRANCH_NAME]', '--branch [BRANCH_NAME]', '--git_branch [BRANCH_NAME]'){|b|
   opts[:git_branch] = b
+}
+opt.on('--git-worktree=[REPOSITORY]'){|rep|
+  opts[:git_worktree] = rep
 }
 opt.on('-r', '--svn_revision=[REV]'){|r|
   opts[:svn_revision] = r
@@ -443,7 +473,12 @@ opt.on('--test_opts=[TEST_OPTS]'){|o|
   opts[:test_opts] = o
 }
 opt.on('--steps=["STEP1 STEP2..."]'){|steps|
-  opts[:steps] = steps.split(/\s+/)
+  case steps
+  when 'build-all'
+    opts[:steps] = BuildRuby::BUILD_ALL_STEPS
+  else
+    opts[:steps] = steps.split(/\s+/)
+  end
 }
 opt.on('--exclude-steps=["STEP1 STEP2..."]'){|steps|
   opts[:exclude_steps] = steps.split(/\s+/)
