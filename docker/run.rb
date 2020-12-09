@@ -68,7 +68,6 @@ tests = {
     trunk-no-mjit
     trunk-iseq_binary
     trunk-O0
-    trunk-cross-mingw64
   },
 }
 
