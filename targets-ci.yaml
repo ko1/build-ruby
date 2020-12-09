@@ -53,9 +53,9 @@ trunk-O0:
   arg: --configure_opts='optflags=-O0'
   loop_minimum_duration: 3600
 trunk-nopara: --no-parallel
-trunk-asserts:        --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1 cppflags=-fno-inline"' --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
-trunk-asserts-nopara: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1"' --no-parallel        --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
-trunk-gc-asserts:     --build_opts='DEFS="-DRGENGC_CHECK_MODE=2"'                                     --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
+trunk-asserts:        --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1 -fno-inline"'   --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
+trunk-asserts-nopara: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1"' --no-parallel --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
+trunk-gc-asserts:     --build_opts='DEFS="-DRGENGC_CHECK_MODE=2"'                              --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
 trunk-vm-asserts:     --build_opts='DEFS="-DVM_CHECK_MODE=2"'
 trunk-mjit:           --configure_opts=cppflags="-DMJIT_FORCE_ENABLE"                          --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
 trunk-mjit-wait:      --configure_opts=cppflags="-DMJIT_FORCE_ENABLE"                          --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30 --test_opts='RUN_OPTS="--disable-gems --jit-wait --jit-warnings --jit-min-calls=5"'
