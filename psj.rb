@@ -24,7 +24,7 @@ end
 def kill_descendant_with_gdb_info pid = Process.pid
   each_descendant(pid) do |pid|
     gdbscript = File.expand_path(File.join(__dir__, "gdbscript"))
-    gdb_command = "gdb -p #{pid} -x #{gdbscript} -batch -quiet"
+    gdb_command = "timeout 60 gdb -p #{pid} -x #{gdbscript} -batch -quiet"
     p gdb_command; STDOUT.flush
     gdb_pid = IO.popen(gdb_command, 'r'){|io|
       while line = io.gets
