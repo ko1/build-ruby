@@ -37,10 +37,16 @@ def build target_name, extra_opts: ARGV, result_collector: DummyCollector, build
         end
       }
     end
-  rescue SystemCallError, Timeout::Error => e
+  rescue SystemCallError => e
     line = "br.rb: #{e.inspect}"
     result_collector << line
     puts line
+  rescue Timeout::Error => e
+    STDERR.puts "$$$ #{$!.inspect}"
+    STDERR.puts "### enter analyzing mode for stuck processes"
+    STDERR.puts
+    require_relative 'psj'
+    kill_descendant_with_gdb_info
   end
 
   result = if $?.success?
