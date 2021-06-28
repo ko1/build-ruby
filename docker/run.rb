@@ -59,6 +59,7 @@ tests = {
     trunk-random2
     trunk-random3
     trunk-repeat20
+    trunk-repeat20-asserts
     trunk-repeat50
     trunk-random-repeat
 
@@ -66,9 +67,9 @@ tests = {
     trunk-mjit
     trunk-mjit-wait
     trunk-no-mjit
-    trunk-iseq_binary
     trunk-O0
   },
+	  # trunk-iseq_binary
 }
 
 # clean
