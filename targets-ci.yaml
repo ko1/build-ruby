@@ -91,6 +91,9 @@ trunk-random7: --test_opts='TESTS="--test-order=random --exclude=readline --excl
 trunk-repeat20:
   arg: --test_opts='TESTS=--repeat-count=20'
   build_timeout: 41600
+trunk-repeat20-asserts:
+  arg: --test_opts='TESTS=--repeat-count=20' --build_opts='DEFS="-DRUBY_DEBUG=1"'
+  build_timeout: 208000
 trunk-repeat50:
   arg: --test_opts='TESTS=--repeat-count=50'
   build_timeout: 208000
