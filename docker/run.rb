@@ -1,6 +1,6 @@
 
 def run image, config_name, noop = false
-  cmd = "docker run --init -d --rm -v ~/ruby:/home/ko1/ruby " + 
+  cmd = "docker run --memory=16g --init -d --rm -v ~/ruby:/home/ko1/ruby " + 
         "--name=#{config_name} --hostname=#{`hostname`.strip}-docker " +
         "--cap-add=SYS_PTRACE --tmpfs /tmp:exec " +
         "-e BUILD_RUBY_WORKING_DIR=/tmp/ruby " +
