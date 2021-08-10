@@ -45,8 +45,8 @@ class BuildRuby
     end
   end
 
-  def initialize repository = nil,
-                 target_name = nil,
+  def initialize target_name = nil,
+                 repository: nil,
                  repository_type: nil,
                  git_branch: nil,
                  git_worktree: nil,
@@ -67,6 +67,7 @@ class BuildRuby
                  logfile: nil,
                  quiet: false,
                  gist: false,
+                 date: nil,
                  timeout: nil
     #
     @REPOSITORY      = repository      || 'https://github.com/ruby/ruby.git'
@@ -78,6 +79,15 @@ class BuildRuby
     @svn_revision = svn_revision
     basename = File.basename(@REPOSITORY)
 
+    root_dir_prefix = ENV['BR_ROOTDIR'] || 'v3'
+    if !root_dir_prefix.empty?
+      root_dir = File.join(root_dir, root_dir_prefix)
+    end
+
+    @SRC_DIR     = File.expand_path(File.join(root_dir, 'src'))
+    @BUILD_DIR   = File.expand_path(File.join(root_dir, 'build'))
+    @INSTALL_DIR = File.expand_path(File.join(root_dir, 'install'))
+
     @TARGET_NAME = target_name ||
                    case
                    when @git_branch
@@ -88,14 +98,20 @@ class BuildRuby
                      basename
                    end
 
-    root_dir_prefix = ENV['BR_ROOTDIR'] || 'v3'
-    if !root_dir_prefix.empty?
-      root_dir = File.join(root_dir, root_dir_prefix)
+    # date suffix
+    if date
+      raise unless @REPOSITORY_TYPE == :git
+      raise unless @REPOSITORY == 'https://github.com/ruby/ruby.git'
+      @REPOSITORY = File.join(@SRC_DIR, 'master_clone')
+
+      if !File.directory?(@REPOSITORY)
+        raise "Prepare master clone direcotry with: git clone https://github.com/ruby/ruby.git #{@REPOSITORY}"
+      end
+
+      @date = date
+      @TARGET_NAME = File.join(@TARGET_NAME + '_date', date.gsub('/', '_'))
     end
 
-    @SRC_DIR     = File.expand_path(File.join(root_dir, 'src'))
-    @BUILD_DIR   = File.expand_path(File.join(root_dir, 'build'))
-    @INSTALL_DIR = File.expand_path(File.join(root_dir, 'install'))
     @TARGET_SRC_DIR     = File.join(@SRC_DIR,     src_dir     || @TARGET_NAME)
     @TARGET_BUILD_DIR   = File.join(@BUILD_DIR,   build_dir   || @TARGET_NAME)
     @TARGET_INSTALL_DIR = File.join(@INSTALL_DIR, install_dir || @TARGET_NAME)
@@ -217,6 +233,24 @@ class BuildRuby
         end
       when :git
         case
+        when @date
+          Dir.chdir(@REPOSITORY) do
+            cmd 'git', 'pull'
+          end
+          cmd 'git', 'clone', @REPOSITORY, @TARGET_NAME
+          cmd 'git', 'checkout', @git_branch if @git_branch
+
+          Dir.chdir(@TARGET_SRC_DIR) do
+            branch = `git branch --show-current`.chomp
+            cmd = "git rev-list --until '#{@date} 12:00:00' -n 1 #{branch}"
+            rev = `#{cmd}`.strip
+            if rev.empty?
+              raise "can not find a revision with: git rev-list --until #{@date} -n 1 #{branch}"
+            else
+              @logger.info "$ #{cmd} #=> #{rev}"
+              cmd "git checkout #{rev} -q"
+            end
+          end
         when @git_worktree
           cmd 'git', '-C', @git_worktree, 'worktree', 'add', File.join(@SRC_DIR, @TARGET_NAME), @git_branch
         when @git_branch
@@ -257,6 +291,8 @@ class BuildRuby
   end
 
   def build_up
+    return if @date
+
     builddir{
       FileUtils.rm_f('.revision.time') # to check correct rev.
       cmd "#{@make} update-unicode  #{@build_opts}", on_failure: :ignore
@@ -439,6 +475,10 @@ opts = {}
 rm_types = nil
 
 opt = OptionParser.new
+
+opt.on('--repository=NAME'){|name|
+  opts[:repository] = name
+}
 opt.on('--repository_type=[TYPE]'){|type|
   opts[:repository_type] = type
 }
@@ -447,6 +487,13 @@ opt.on('-b [BRANCH_NAME]', '--branch [BRANCH_NAME]', '--git_branch [BRANCH_NAME]
 }
 opt.on('--git-worktree=[REPOSITORY]'){|rep|
   opts[:git_worktree] = rep
+}
+opt.on('--date=[DATE]', 'yyyy/mm/dd'){|date|
+  if /\A(\d{4})\/(\d\d)\/(\d\d)\z/ =~ date
+    opts[:date] = date
+  else
+    raise "DATE should be yyyy/mm/dd, but #{date} is given"
+  end
 }
 opt.on('-r', '--svn_revision=[REV]'){|r|
   opts[:svn_revision] = r
@@ -538,10 +585,9 @@ opt.on('--add-env=[VAR=VAL]'){|env|
 
 opt.parse!(ARGV)
 
-repository = ARGV.shift
 target_name ||= ARGV.shift
 
-br = BuildRuby.new(repository, target_name, **opts)
+br = BuildRuby.new(target_name, **opts)
 br.show_config
 
 if rm_types
