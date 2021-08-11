@@ -13,7 +13,9 @@ def (DummyCollector = Object.new).<<(obj)
   # ignore
 end
 
-def build target_name, extra_opts: ARGV, result_collector: DummyCollector, build_timeout: (60 * 60 * 2) # 2 hours
+def build target_name, extra_opts: ARGV,
+          result_collector: DummyCollector,
+          build_timeout: (60 * 60 * 2) # 2 hours
   opts = []
   # opts by default
   opts << "--target_name=#{target_name}"
@@ -201,6 +203,10 @@ def run target_name
   raise "run is unsupported yet"
 end
 
+def exe target_name
+  build target_name, extra_opts: ['--only-show=exe', *ARGV]
+end
+
 case cmd
 when nil, '-h', '--help'
   puts <<EOS
@@ -219,7 +225,7 @@ when 'list'
 when 'build'
   result, logfile = build ARGV.shift || raise('build target is not provided')
   unless /OK/ =~ result
-    system("#{PAGER} #{logfile}")
+    system("#{PAGER} #{logfile}") unless PAGER.empty?
   end
 when 'build_report'
   build_report ARGV.shift || raise('build target is not provided')
@@ -231,6 +237,8 @@ when 'build_all'
   }
 when 'run'
   run ARGV.shift
+when 'exe'
+  exe ARGV.shift
 when 'run_all'
   TARGETS.each{|target_name, config|
     run target_name

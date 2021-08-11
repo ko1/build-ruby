@@ -170,6 +170,21 @@ class BuildRuby
     pp self unless @quiet
   end
 
+  def show type
+    case type
+    when 'exe'
+      exe_path = "#{File.join(@TARGET_INSTALL_DIR, 'bin/ruby')}"
+      if File.exist? exe_path
+        puts exe_path
+      else
+        STDERR.puts "Not found: #{exe_path}"
+        exit 1
+      end
+    else
+      raise
+    end
+  end
+
   def setup_dir
     # setup directories
     FileUtils.mkdir_p(@SRC_DIR)            unless File.exist?(@SRC_DIR)
@@ -473,6 +488,7 @@ end
 
 opts = {}
 rm_types = nil
+show_type = nil
 
 opt = OptionParser.new
 
@@ -582,12 +598,21 @@ opt.on('--add-env=[VAR=VAL]'){|env|
   raise "--add-env receives ill-formed env: #{env}" if !val || !var
   ENV[val] = var
 }
+opt.on('--only-show=TYPE'){|type|
+  show_type = type
+}
 
 opt.parse!(ARGV)
 
 target_name ||= ARGV.shift
 
 br = BuildRuby.new(target_name, **opts)
+
+if show_type
+  br.show show_type
+  exit
+end
+
 br.show_config
 
 if rm_types
