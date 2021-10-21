@@ -102,6 +102,6 @@ trunk-random-repeat:
   build_timeout: 41600
 trunk-pthread-coroutine:
   arg: --configure_opts=--with-coroutine=pthread
-trunk-yjt:
+trunk-yjit:
   arg: --configure_opts=cppflags=-DYJIT_FORCE_ENABLE
 
