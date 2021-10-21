@@ -100,4 +100,8 @@ trunk-repeat50:
 trunk-random-repeat:
   arg: --test_opts='TESTS="--repeat-count=20 --test-order=random"'
   build_timeout: 41600
+trunk-pthread-coroutine:
+  arg: --configure_opts=--with-coroutine=pthread
+trunk-yjt:
+  arg: --configure_opts=cppflags=-DYJIT_FORCE_ENABLE
 

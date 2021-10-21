@@ -67,6 +67,7 @@ tests = {
     trunk-mjit
     trunk-mjit-wait
     trunk-no-mjit
+    trunk-yjit
     trunk-O0
   },
 	  # trunk-iseq_binary
