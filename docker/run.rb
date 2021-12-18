@@ -11,10 +11,11 @@ def run image, config_name, noop = false
 end
 
 def run_interractive arg
+  image = 'rubydev:focal'
   cmd = "docker run -it --init --rm -v ~/ruby:/home/ko1/ruby " +
         "--name=run_interractive.#{$$}  --hostname=#{`hostname`.strip}-docker " +
         "--cap-add=SYS_PTRACE --tmpfs /tmp:exec " +
-        "#{IMAGE_NAME} " + arg
+        "#{image} " + arg
   puts "kick: #{cmd}"
   system cmd
 
