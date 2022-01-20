@@ -143,7 +143,7 @@ class BuildRuby
     @ruby_env = ENV.find_all{|k, v| /\ARUBY/ =~ k}
 
     case RUBY_PLATFORM
-    when /mswin/
+    when /mswin|mingw/
       @make = 'nmake'
       @build_opts = ''
     else
@@ -284,7 +284,7 @@ class BuildRuby
       unless File.exist?('configure')
         cmd 'autoconf'
       end
-    } if RUBY_PLATFORM !~ /win/
+    } if RUBY_PLATFORM !~ /mswin|mingw/
   end
 
   def builddir
@@ -296,7 +296,7 @@ class BuildRuby
   def configure
     builddir{
       unless File.exist? File.join(@TARGET_BUILD_DIR, 'Makefile')
-        if RUBY_PLATFORM !~ /win/
+        if RUBY_PLATFORM !~ /mswin|mingw/
           cmd File.join(@TARGET_SRC_DIR, 'configure'), "--prefix=#{@TARGET_INSTALL_DIR}", '--disable-install-doc', *@configure_opts
         else
           cmd File.join(@TARGET_SRC_DIR, 'win32/configure.bat'), "--prefix=#{@TARGET_INSTALL_DIR}", '--disable-install-doc', *@configure_opts
