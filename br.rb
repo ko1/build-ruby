@@ -31,7 +31,8 @@ def build target_name, extra_opts: ARGV,
   opts.concat extra_opts
 
   begin
-    Timeout.timeout(build_timeout * 1.1) do # safety guard: build-ruby.rb's timeout may not work https://ruby.slack.com/archives/C8Q2X0NSZ/p1609806757225800
+    Timeout.timeout(build_timeout * 1.1) do
+      # safety guard: build-ruby.rb's timeout may not work https://ruby.slack.com/archives/C8Q2X0NSZ/p1609806757225800
       IO.popen("ruby #{BUILD_RUBY_SCRIPT} #{opts.join(' ')}", 'r', err: [:child, :out]){|io|
         while line = io.gets
           result_collector << line
