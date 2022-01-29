@@ -66,6 +66,8 @@ trunk-mjit-wait:
 trunk-no-mjit:
   arg: --configure_opts='--disable-jit-support'
   loop_minimum_duration: 3600
+trunk-yjit:
+  arg: --add-env=RUBY_YJIT_ENABLE=1
 trunk-theap-asserts:
   arg: --build_opts='DEFS="-DTRANSIENT_HEAP_CHECK_MODE=1 -DTRANSIENT_HEAP_DEBUG_INFINITE_BLOCK=1 -DTRANSIENT_HEAP_DEBUG_DONT_PROMOTE=-1 -DARRAY_DEBUG=1 -DHASH_DEBUG=1"'
 trunk-no-theap:
