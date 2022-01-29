@@ -16,12 +16,13 @@
     <tr>
       <% r = test.result %>
       <% t = r.updated_at %>
-      <td> <a href='/results/<%=h test.name %>'><%=h test.name %></a></td>
-      <td> <a href='/results/<%=h test.name %>/<%=h r.id %>'><%=h Time.at(t).strftime('%H:%M') %></a> (<%= good_diff(t) %> ago)
+      <td><a href='/results/<%=h test.name %>'><%=h test.name %></a></td>
+      <td><a href='/results/<%=h test.name %>/<%=h r.id %>'><%=h Time.at(t).strftime('%H:%M') %></a> (<%= good_diff(t) %> ago) <%=h r.result %>
+      <% if r.rev %>
+        (<%= rev_link(r) %>)
+      <% end %>
       <% if r.detail_link %>
-	<a href='<%=h r.detail_link %>'><%=h r.result %></a>
-      <% else %>
-	<%=h r.result %>
+        [<a href='<%=h r.detail_link %>'>LOG</a>]
       <% end %>
       </td>
       <td>

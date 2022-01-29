@@ -22,14 +22,23 @@ class ResultServer < Sinatra::Base
     set :database, adapter: "sqlite3", database: File.expand_path("~/tmp/result_srv.db")
   end
 
+  get '/check' do
+    'OK'
+  end
+
   # actions
   get '/' do
-    @test_status = TestStatus.index_all
+    @test_status = TestStatus.index_all_latest
     erb :results
   end
 
   get '/latest' do
     @test_status = TestStatus.index_all_latest
+    erb :results
+  end
+
+  get '/results/' do
+    @test_status = TestStatus.order(:name)
     erb :results
   end
 
@@ -44,17 +53,6 @@ class ResultServer < Sinatra::Base
     #content_type 'text/plain'
     begin
       data = log_data(name)
-
-=begin
-      _header, _, data = data.partition(/\n/)
-      config, _, data = data.partition(/\n/)
-      @config = {}
-      config.scan(/@(.+?)=(.+?),/){|r|
-        n, e = $1, $2
-        break if n == 'logger'
-        @config[CGI.escapeHTML(n)] = CGI.escapeHTML(e)
-      }
-=end
 
       @name = name
       @data = []
@@ -125,11 +123,6 @@ class ResultServer < Sinatra::Base
     result_id = db_write(name, **opts)
 
     "http://ci.rvm.jp/results/#{name}/#{result_id}"
-  end
-
-  get '/results/' do
-    @test_status = TestStatus.order(:name)
-    erb :results
   end
 
   def results_name name
