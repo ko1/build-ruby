@@ -8,7 +8,8 @@ require 'cgi/util'
 require 'zlib'
 require 'pp'
 
-Time.zone = "Tokyo"
+# Time.zone = "Tokyo"
+
 if defined? ActiveRecord.default_timezone
   ActiveRecord.default_timezone = :local
 else
