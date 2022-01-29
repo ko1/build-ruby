@@ -3,8 +3,8 @@
 
 <table>
   <tr>
-    <th>Name</th>
-    <th>Latest</th>
+    <th>Configuration</th>
+    <th>Latest trial</th>
     <th></th>
     <th>Stat in last 24H<br/>errors / tries</th>
     <th>Stat in last 3 days<br/>errors / tries</th>
@@ -26,9 +26,6 @@
         
       <% if r.rev %>
         (<%= rev_link(r) %>)
-      <% end %>
-      <% if r.detail_link %>
-        [<a href='<%=h r.detail_link %>'>LOG</a>]
       <% end %>
       </td>
       <td>
