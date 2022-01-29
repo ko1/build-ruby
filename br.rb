@@ -5,12 +5,32 @@ require 'etc'
 require 'socket'
 require 'yaml'
 require 'yaml/store'
+require 'json'
+require 'logger'
+require 'benchmark'
+
 require_relative 'load_env'
 
 cmd = ARGV.shift
 
 def (DummyCollector = Object.new).<<(obj)
   # ignore
+end
+
+class LogCollector
+  def initialize rs
+    @rs = rs
+  end
+
+  def write(line)
+    @rs << line.sub(/^E.+ ERROR -- : /, '')
+  end
+
+  def close; end
+end
+
+def collect_logger rs
+  Logger.new(LogCollector.new(rs))
 end
 
 def build target_name, extra_opts: ARGV,
@@ -31,7 +51,7 @@ def build target_name, extra_opts: ARGV,
   opts.concat extra_opts
 
   begin
-    Timeout.timeout(build_timeout * 1.1) do
+    Timeout.timeout(build_timeout * 10) do
       # safety guard: build-ruby.rb's timeout may not work https://ruby.slack.com/archives/C8Q2X0NSZ/p1609806757225800
       IO.popen("ruby #{BUILD_RUBY_SCRIPT} #{opts.join(' ')}", 'r', err: [:child, :out]){|io|
         while line = io.gets
@@ -45,11 +65,11 @@ def build target_name, extra_opts: ARGV,
     result_collector << line
     puts line
   rescue Timeout::Error => e
-    STDERR.puts "$$$ #{$!.inspect}"
-    STDERR.puts "### enter analyzing mode for stuck processes"
-    STDERR.puts
+    STDERR.puts e
+    result_collector << "$$$ #{$!.inspect}"
+    result_collector << "### enter analyzing mode for stuck processes (br.rb)"
     require_relative 'psj'
-    kill_descendant_with_gdb_info
+    kill_descendant_with_gdb_info collect_logger(result_collector)
   end
 
   result = if $?.success?
@@ -57,6 +77,7 @@ def build target_name, extra_opts: ARGV,
            else
              'NG'
            end
+  # pp result_collector
   [result, logfile]
 end
 
@@ -69,7 +90,6 @@ def check_logfile logfile
     exit_results: [],
     rev: nil,
     test_all: nil,
-    test_all_log: [],
     test_spec: nil,
   }
 
@@ -77,12 +97,15 @@ def check_logfile logfile
   test_all_logging_lines = 0
 
   open(logfile){|f|
-    f.each_line{|line|
+    f.each_line.with_index{|line, lineno|
+      line.scrub!
       case
+      when /ERROR -- : (.+)/ =~ line
+        r[:exit_results] << [lineno, "stderr: " + $1]
       when /INFO -- : \$\$\$\[beg\] (.+)/ =~ line
-        cmd = $1
+        r[:exit_results] << [lineno, cmd = $1]
       when /INFO -- : \$\$\$\[end\] (.+)/ =~ line
-        r[:exit_results] << $1
+        cmd.replace($1)
       when !r[:rev] && /INFO -- : At revision (\d+)\./ =~ line
         r[:rev] = "r#{$1}"
       when !r[:rev] && /INFO -- : Updated to revision (\d+)\./ =~ line
@@ -92,12 +115,6 @@ def check_logfile logfile
         r[:rev] = $1
       when /test-all/ =~ cmd && /INFO -- : (\d+ tests?, \d+ assertions?, \d+ failures?, \d+ errors?, \d+ skips?)/ =~ line
         r[:test_all] = $1
-      when /test-all/ =~ cmd && /INFO -- (:   \d+\))/ =~ line
-        test_all_logging_lines = 2
-        r[:test_all_log] << $1
-      when /test-all/ =~ cmd && test_all_logging_lines > 0 && /INFO -- (: .+)/ =~ line
-        test_all_logging_lines -= 1
-        r[:test_all_log] << $1
       # INFO -- : 3568 files, 26383 examples, 200847 expectations, 0 failures, 0 errors, 0 tagged
       when /spec/ =~ cmd && /INFO -- : (\d+ files?, \d+ examples?, \d+ expectations?, \d+ failures?, \d+ errors?, \d+ tagged)/ =~ line 
         r[:test_spec] = $1
@@ -106,6 +123,8 @@ def check_logfile logfile
   } if File.exist?(logfile)
   r
 end
+
+UNAME_A = `uname -a`
 
 def build_report target_name
   target = TARGETS[target_name]
@@ -129,30 +148,24 @@ def build_report target_name
     }
   end
 
-  start = Time.now
-  result, logfile = build target_name, result_collector: results = [], build_timeout: target.build_timeout
-  puts result
+  result, out_log, logfile = nil
+  tm = Benchmark.measure{
+    result, logfile = build target_name, result_collector: out_log = [], build_timeout: target.build_timeout
+  }
 
   # check log file
   r = check_logfile(logfile)
-  result = "#{result} (#{r[:rev]})" if r[:rev]
-  results.unshift(*[
-    "rev: #{r[:rev]}",
-    "test-all : #{r[:test_all]}",
-    *r[:test_all_log],
-    "test-spec: #{r[:test_spec]}",
-    "exit statuses:",
-    *r[:exit_results].map{|line| '  ' + line},
-    '',
-  ].join("\n"))
 
   # send result
 
   h = {
     name: "#{target_name}@#{Socket.gethostname}",
+    rev: r[:rev],
     result: result,
-    desc: results.join,
-    memo: `uname -a`,
+    desc: out_log.join,
+    desc_json: JSON.dump(r),
+    memo: UNAME_A,
+    elapsed_time: tm.real,
     timeout: Integer(target.build_timeout * 1.5),
     to: target.alert_to,
 
@@ -187,7 +200,7 @@ def build_report target_name
     state_db[target_name] = state
   end
 
-  sleep_time = state[:loop_dur] - (Time.now.to_i - start.to_i)
+  sleep_time = state[:loop_dur] - tm.real.to_i
 
   if target.loop_minimum_duration != 0
     # introduce randomness
@@ -244,6 +257,9 @@ when 'run_all'
   TARGETS.each{|target_name, config|
     run target_name
   }
+when 'check_logfile'
+  text = JSON.dump(check_logfile(ARGV.shift))
+  puts text
 when 'update_default_targets'
   branches = `svn ls https://svn.ruby-lang.org/repos/ruby/branches`.each_line.map{|line|
     [$1, "https://svn.ruby-lang.org/repos/ruby/branches/#{$1}"] if /^(ruby_.+)\// =~ line

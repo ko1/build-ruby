@@ -198,28 +198,34 @@ class BuildRuby
   def cmd *args, on_failure: :raise
     cmd_str = args.join(' ')
     @logger.info "$$$[beg] #{cmd_str}"
-    IO.popen(cmd_str, 'r+'){|io|
+
+    err_in, err_out = IO.pipe
+    IO.popen(cmd_str, 'r+', err: err_out) do |out_in|
+      err_out.close
+
+      out_th = Thread.new{out_in.each_line{|line| @logger.info line.chomp}}
+      err_th = Thread.new{err_in.each_line{|line| @logger.error line.chomp}}
+
       if @timeout
         begin
           Timeout.timeout(@timeout) do
-            io.each_line{|line|
-              @logger.info line.chomp
-            }
+            [out_th, err_th].each(&:join)
           end
         rescue Interrupt, Timeout::Error
-          STDERR.puts "$$$ #{$!.inspect}"
-          STDERR.puts "### enter analyzing mode for stuck processes"
-          STDERR.puts
+          @logger.error "$$$ #{$!.inspect}"
+          @logger.error "### enter analyzing mode for stuck processes"
+          @logger.error ""
           require_relative 'psj'
-          kill_descendant_with_gdb_info
+          kill_descendant_with_gdb_info @logger
           raise
         end
       else
-        io.each_line{|line|
-          @logger.info line.chomp
-        }
+        [out_th, err_th].each(&:join)
       end
-    }
+    ensure
+      err_in.close
+      out_in.close
+    end
     @logger.info exit_str = "$$$[end] #{cmd_str.dump} exit with #{$?.to_i}."
 
     if !$?.success?
@@ -252,7 +258,7 @@ class BuildRuby
           Dir.chdir(@REPOSITORY) do
             cmd 'git', 'pull'
           end
-          cmd 'git', 'clone', @REPOSITORY, @TARGET_NAME
+          cmd 'git', 'clone', '-q', @REPOSITORY, @TARGET_NAME
           cmd 'git', 'checkout', @git_branch if @git_branch
 
           Dir.chdir(@TARGET_SRC_DIR) do
@@ -356,7 +362,7 @@ class BuildRuby
 
   def test_btest
     builddir{
-      cmd "#{@make} yes-btest #{@test_opts}", on_failure: :skip
+      cmd "#{@make} yes-btest TESTOPTS=-q #{@test_opts}", on_failure: :skip
     }
   end
 
@@ -368,7 +374,8 @@ class BuildRuby
 
   def test_all
     builddir{
-      cmd "#{@make} yes-test-all #{@test_opts}", on_failure: :skip
+      # TODO: support older versions which do not support --stderr-on-failure
+      cmd "#{@make} yes-test-all TESTOPTS='--stderr-on-failure' #{@test_opts}", on_failure: :skip
     }
   end
 

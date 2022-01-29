@@ -1,15 +1,55 @@
+<style>
+.lines::before {
+  content: attr(alt);
+  color: gray;
+  font-size: 80%;
+  margin-right: 1em;
+}
 
-<h1>Results of <%= name %> at <%= result.updated_at %></h1>
+.stderr_line::before {
+  content: '[stderr]';
+  margin-right: 1em;
+  color: red;
+  font-size: 80%;
+}
+
+.success_line::before {
+  content: '🟩';
+  margin-right: 1em;
+}
+
+.failed_line::before {
+  content: '🟥';
+  margin-right: 1em;
+}
+
+.stderr_line {
+  font-family: monospace;
+  white-space: pre;
+}
+
+</style>
+<h1><a href=''>Results of <%= name %> at <%= result.updated_at %></a></h1>
     <ul>
       <li><a href='/results/<%=h result.name %>'><%=h result.name %></a></li>
-      <li><a href='/results/<%=h result.name %>/<%= result.id %>'><%= result.updated_at %></a></li>
-      <li>
+      <li class='<%= /OK/ =~ result.result ? 'success_line' : 'failed_line'%>'><%=h result.result %>
       <% if result.detail_link %>
-	<%=h result.result %> <a href='<%=h result.detail_link %>'>[LOG]</a>
-      <% else %>
-	<%=h result.result %>
+	 <a href='<%=h log_link = result.detail_link %>'>[LOG]</a>
       <% end %>
       </li>
-      <li><pre><%=h result.desc %></pre></li>
+      <% if rev = result.rev %>
+        <li>rev: <%= rev_link result %></li>
+      <% end %>
+      <% if result.desc_json
+           desc = JSON.parse(result.desc_json, symbolize_names: true)
+       %>
+        <li>test-all: <%=h desc[:test_all] || '' %></li>
+        <li>test-spec: <%=h desc[:test_spec] || '' %></li>
+        <li>commands:<pre><table><% desc[:exit_results].each do |(lineno, line)|
+          %><%= exit_results_line(log_link, lineno, line) %>
+<% end %></table></pre>
+	</li>
+      <% end %>
       <li><pre><%=h result.memo %></pre></li>
+      <li><pre><%=h result.desc %></pre></li>
     </ul>

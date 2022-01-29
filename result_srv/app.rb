@@ -4,9 +4,16 @@ Bundler.require
 require 'json'
 require 'net/http'
 require 'uri'
+require 'cgi/util'
+require 'zlib'
+require 'pp'
 
 Time.zone = "Tokyo"
-ActiveRecord::Base.default_timezone = :local
+if defined? ActiveRecord.default_timezone
+  ActiveRecord.default_timezone = :local
+else
+  ActiveRecord::Base.default_timezone = :local
+end
 
 class ResultServer < Sinatra::Base
   configure do
@@ -25,11 +32,51 @@ class ResultServer < Sinatra::Base
     erb :results
   end
 
+  def log_data name
+    File.read("logfiles/#{name}")
+  rescue
+    Zlib::GzipReader.open("logfiles/#{name}.gz"){|gz| gz.read}
+  end
+
   get '/logfiles/:name' do
+    name = params['name']
+    #content_type 'text/plain'
+    begin
+      data = log_data(name)
+
+=begin
+      _header, _, data = data.partition(/\n/)
+      config, _, data = data.partition(/\n/)
+      @config = {}
+      config.scan(/@(.+?)=(.+?),/){|r|
+        n, e = $1, $2
+        break if n == 'logger'
+        @config[CGI.escapeHTML(n)] = CGI.escapeHTML(e)
+      }
+=end
+
+      @name = name
+      @data = []
+
+      data.each_line.with_index{|line, ln|
+        link = "L#{ln}"
+        if /T([\d:]+)\..+\s(INFO|ERROR) -- : (.*)$/ =~ line
+          time, info = CGI.escapeHTML($1), CGI.escapeHTML($3)
+          error_prefix = '<span class="stderr_prefix"></span>' if $2 == 'ERROR'
+          @data << "<a class='lines' alt='#{time}' id='#{link}' href='\##{link}'></a>#{error_prefix}#{info}"
+        end
+      }
+      erb :logfile
+    rescue => e
+      CGI.escapeHTML("#{e}")
+    end
+  end
+
+  get '/logfiles_/:name' do
     name = params['name']
     content_type 'text/plain'
     begin
-      File.read("logfiles/#{name}")
+      log_data(name)
     rescue
       'not found...'
     end
@@ -50,7 +97,7 @@ class ResultServer < Sinatra::Base
     r = Result.new(name: name, **opts)
     r.save
     alert_setup(name, opts[:timeout], opts[:to])
-    alert name, opts[:result], otps2msg(name, opts), r.id if /OK/ !~ opts[:result]
+    alert(name, opts[:result], opts[:rev], otps2msg(name, opts), r.id) if /OK/ !~ opts[:result]
     r.id
   end
 
@@ -58,17 +105,17 @@ class ResultServer < Sinatra::Base
     name = par:name
 
     # receive
-    opts = params_set(:result, :desc, :detail_link, :memo, :details)
+    opts = params_set(:result, :desc, :desc_json, :rev, :elapsed_time, :detail_link, :memo, :details)
 
     # write to file
     details = opts.delete(:details)
     logname = opts.delete(:detail_link)
 
     if details && logname
-      open("logfiles/#{logname}", 'w'){|f|
-        f.puts details
+      Zlib::GzipWriter.open("logfiles/#{logname}.gz"){|f|
+        f.write details
       }
-      opts[:detail_link] = "http://ci.rvm.jp/logfiles/#{logname}"
+      opts[:detail_link] = "/logfiles/#{logname}"
     else
       p name: name, details: details, logname: logname
     end
@@ -85,9 +132,16 @@ class ResultServer < Sinatra::Base
   end
 
   def results_name name
-    tm = Time.at(Time.now - 3 * 60 * 60 * 24)
-    results = Result.where(name: name).where('updated_at > ?', tm).order(updated_at: :desc)
-    erb :results_each_name, locals: {name: name, results: results}
+    days = params['d']&.to_i || 3
+
+    #                    start
+    # --ta---------------tb---------> time
+    #    <===  days  ====>
+    tb_sec = params['start']&.to_i || Time.now.to_i
+    ta = Time.at(tb_sec - days * 60 * 60 * 24)
+    tb = Time.at(tb_sec)
+    results = Result.where(name: name).where('updated_at > ? and updated_at <= ?', ta, tb).order(updated_at: :desc)
+    erb :results_each_name, locals: {name: name, results: results, days: days}
   end
 
   get '/results/:name' do |name|
@@ -110,6 +164,12 @@ class ResultServer < Sinatra::Base
   helpers do
     def h(text)
       Rack::Utils.escape_html(text)
+    end
+
+    def rev_link result
+      if rev = result.rev
+        "<a href='https://github.com/ruby/ruby/commit/#{h(rev)}'>#{h(rev)}</a>"
+      end
     end
 
     def recent_failures_stat name, days
@@ -144,11 +204,46 @@ class ResultServer < Sinatra::Base
         "#{Integer(d/(60 * 60))} hour"
       end
     end
+
+    # <a href=<%= "#{log_link}\#L#{lineno}" || '' %> class='lineno'>L<%= lineno.to_i %></a>	<%= emph_error() %>
+    def exit_results_line log_link, lineno, line
+      line = line.split("\r").first # TODO: to be deleted
+      case line
+      when /^stderr: (.+)/
+        line_class = '<span class="stderr_line">'
+        line = $1
+      when /exit with 0\./
+        line_class = '<span class="success_line">'
+      when /exit with \d+\./
+        line_class = '<span class="failed_line">'
+      end
+      link = "href='#{log_link}\#L#{lineno}' " if log_link
+      "<tr><td align='right'><a #{link}class='lines' alt='#{lineno}'></a></td><td>#{line_class}#{h(line)}</span></td></tr>"
+    end
+
+    def each_name_navi last_result, days
+      if last_result
+        "<a href='?start=#{last_result.updated_at.to_i}&d=#{days}'>previous #{days} days</a>"
+      end
+    end
   end
 end
 
 class Result < ActiveRecord::Base
   after_commit :update_test_status
+
+  def pretty_elapsed_time
+    if t = self.elapsed_time&.to_i
+      case
+      when t > 60*60
+        "#{t/60*60} hour #{t%(60*60) / 60} min #{t % 60} sec"
+      when t > 60
+        "#{t / 60} min #{t % 60} sec"
+      else
+        "#{t} sec"
+      end
+    end
+  end
 
   private
   def update_test_status
@@ -180,20 +275,26 @@ end
 
 # alert
 def otps2msg name, opts
-<<EOS
-Alert on #{name}
-rsult : #{opts[:result]}
-detail: #{opts[:detail_link]}
-desc:
-#{opts[:desc]}
-memo:
-#{opts[:memo]}
-EOS
+  if json = opts[:desc_json]
+    summary = JSON.parse(json).map{|key, val|
+      "#{key}: #{PP.pp(val, '')}"
+    }.join("\n")
+
+    summary = summary[0..8000] + '...' if summary.size > 8000
+  end
+
+  <<~EOS
+  Alert on #{name}
+  result: #{opts[:result]}
+  log: #{opts[:detail_link]}
+  #{summary}
+
+  #{opts[:desc]}
+  memo: #{opts[:memo]}
+  EOS
 end
 
-$REVS = {}
-
-def alert name, result, msg, result_id = nil
+def alert name, result, rev, msg, result_id = nil
   to = WATCH_LIST.dig(name, :to) || []
   to = %w(ruby-alerts@quickml.atdot.net) if to.empty?
   subject = "failure alert on #{name} (#{result})"
@@ -210,23 +311,16 @@ def alert name, result, msg, result_id = nil
     }
   else
     puts "#{Time.now} #{cmd}"
+
+    # mail
     IO.popen(cmd, 'r+'){|io|
-      io.puts msg + "\n\n-- \n#{url}"
+      io.puts "#{url}\n-- \n#{msg}"
       io.close_write
       puts io.read
     }
 
-    rev = $1 if /(r\d+)/ =~ subject
-
-    if rev && !$REVS[rev]
-      address = "<!here> "
-      $REVS[rev] = true
-    else
-      address = ''
-    end
-
-    system("ruby slack-notice.rb '#{address}#{subject}. See #{url}'")
-    notify_simpler_alerts(name, url, result)
+    # slack notification
+    notify_simpler_alerts(name, url, result, rev)
   end
 end
 
@@ -237,13 +331,13 @@ def alert_setup name, timeout_str, to
   WATCH_LIST[name] = {timeout: timeout, alerted: false, to: to}
 end
 
-def notify_simpler_alerts name, url, result
-  if ENV.key?('SIMPLER_ALERTS_URL') && match = result.match(/\ANG \((?<commit>[^)]+)\)\z/)
+def notify_simpler_alerts name, url, result, rev
+  if ENV.key?('SIMPLER_ALERTS_URL') && rev
     params = {
       ci: "ci.rvm.jp",
       env: name,
       url: url,
-      commit: match[:commit],
+      commit: rev,
     }
     uri = URI.parse(ENV['SIMPLER_ALERTS_URL'])
     Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https') do |http|
@@ -282,4 +376,6 @@ if $0 == __FILE__
       sleep 60
     }
   }
+else
+  STDERR.puts "watch threads are not kicked"
 end

@@ -1,18 +1,40 @@
 
-<h1>Results of <%=h name %></h1>
+<h1>Recent <%= days %> days results of <%=h name %></h1>
+
+<script language="javascript" type="text/javascript">
+function only_failed(checked) {
+    for (var e of document.getElementsByClassName('success_result')) {
+        if (checked) {
+            console.log( e.style.display);
+            e.style.display = "none";
+        }
+        else {
+            e.style.display = "";
+        }
+    }
+}
+</script>
+
+<p>
+  <input type='checkbox' onclick='only_failed(this.checked)'  /> Show only failed result.<br/>
+</p>
 
 <table>
-  <% results.each{|result| %>
-    <tr>
+  <% results.each{|result| success = /OK/ =~ result.result %>
+    <tr class=<%= (success ? 'success_result' : 'failed_result').dump %>>
       <td> <a href='/results/<%=h name %>/<%=h result.id %>'><%= result.updated_at %></a></td>
+      <td> <%= success ? '🟩' : '🟥'%> <%=h result.result %> </td>
+      <td><%= (link = rev_link(result)) ? "(#{link})" : '' %></td>
       <td>
       <% if result.detail_link %>
-	<a href='<%= result.detail_link %>'><%=h result.result %></a>
-      <% else %>
-	<%=h result.result %>
+	 <a href='<%= result.detail_link %>'>[LOG]</a>
       <% end %>
       </td>
-      <td>
+      <td><%= result.pretty_elapsed_time %></td>
     </tr>
   <% } %>
 </table>
+
+<p>
+  <%= each_name_navi(results.last, days) %>
+</p>
