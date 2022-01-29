@@ -17,7 +17,13 @@
       <% r = test.result %>
       <% t = r.updated_at %>
       <td><a href='/results/<%=h test.name %>'><%=h test.name %></a></td>
-      <td><a href='/results/<%=h test.name %>/<%=h r.id %>'><%=h Time.at(t).strftime('%H:%M') %></a> (<%= good_diff(t) %> ago) <%=h r.result %>
+      <td>
+        <a href='/results/<%=h test.name %>/<%=h r.id %>'>
+          <%=h (/OK/ =~ (x = r.result)) ? "🟩 #{x}" : "🟥 #{x}"%>
+          <%=h Time.at(t).strftime('%H:%M') %>
+        </a>
+        (<%= good_diff(t) %> ago) 
+        
       <% if r.rev %>
         (<%= rev_link(r) %>)
       <% end %>
