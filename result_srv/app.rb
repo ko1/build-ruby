@@ -251,7 +251,7 @@ class Result < ActiveRecord::Base
     if t = self.elapsed_time&.to_i
       case
       when t > 60*60
-        "#{t/60*60} hour #{t%(60*60) / 60} min #{t % 60} sec"
+        "#{t/(60*60)} hour #{t%(60*60) / 60} min #{t % 60} sec"
       when t > 60
         "#{t / 60} min #{t % 60} sec"
       else
