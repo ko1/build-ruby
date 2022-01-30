@@ -1,3 +1,4 @@
+<%= style %>
 
 <h1>Latest results at <%= Time.now %></h1>
 
@@ -14,16 +15,13 @@
 
   <% @test_status.each do |test| %>
     <tr>
-      <% r = test.result %>
+      <% r = test.result; success_status = r.success? ? 'success' : 'failed' %>
       <% t = r.updated_at %>
       <td><a href='/results/<%=h test.name %>'><%=h test.name %></a></td>
-      <td>
-        <a href='/results/<%=h test.name %>/<%=h r.id %>'>
-          <%=h (/OK/ =~ (x = r.result)) ? "🟩 #{x}" : "🟥 #{x}"%>
-          <%=h Time.at(t).strftime('%H:%M') %>
+      <td class='<%= success_status %>_line'><a href='/results/<%=h test.name %>/<%=h r.id %>'><%=h r.result %>
+         <%=h Time.at(t).strftime('%H:%M') %>
         </a>
         (<%= good_diff(t) %> ago) 
-        
       <% if r.rev %>
         (<%= rev_link(r) %>)
       <% end %>

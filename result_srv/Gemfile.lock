@@ -14,10 +14,11 @@ GEM
     bond (0.5.1)
     concurrent-ruby (1.1.9)
     foreman (0.87.2)
-    i18n (1.8.11)
+    i18n (1.9.1)
       concurrent-ruby (~> 1.0)
     kgio (2.11.4)
     minitest (5.15.0)
+    multi_json (1.15.0)
     mustermann (1.1.1)
       ruby2_keywords (~> 0.0.1)
     power_assert (2.0.1)
@@ -49,6 +50,12 @@ GEM
     sinatra-activerecord (2.0.25)
       activerecord (>= 4.1)
       sinatra (>= 1.0)
+    sinatra-contrib (2.1.0)
+      multi_json
+      mustermann (~> 1.0)
+      rack-protection (= 2.1.0)
+      sinatra (= 2.1.0)
+      tilt (~> 2.0)
     slack-incoming-webhooks (0.3.0)
     sqlite3 (1.4.2)
     test-unit (3.5.3)
@@ -76,6 +83,7 @@ DEPENDENCIES
   shotgun
   sinatra
   sinatra-activerecord
+  sinatra-contrib
   slack-incoming-webhooks
   sqlite3
   test-unit
@@ -83,4 +91,4 @@ DEPENDENCIES
   unicorn
 
 BUNDLED WITH
-   2.1.4
+   2.4.0.dev

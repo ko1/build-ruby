@@ -2,12 +2,12 @@ source "http://rubygems.org"
 
 gem 'activerecord'
 gem 'sinatra'
+gem 'sinatra-contrib'
 gem 'sinatra-activerecord'
 gem 'rake'
 gem 'unicorn'
 gem 'sqlite3'
 gem 'slack-incoming-webhooks'
-gem 'unicorn'
 gem 'rack-handlers'
 
 group :development do

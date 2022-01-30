@@ -1,3 +1,4 @@
+
 require 'bundler'
 Bundler.require
 
@@ -7,6 +8,7 @@ require 'uri'
 require 'cgi/util'
 require 'zlib'
 require 'pp'
+require "sinatra/reloader" if development?
 
 # Time.zone = "Tokyo"
 
@@ -20,6 +22,10 @@ class ResultServer < Sinatra::Base
   configure do
     register Sinatra::ActiveRecordExtension
     set :database, adapter: "sqlite3", database: File.expand_path("~/tmp/result_srv.db")
+  end
+
+  configure :development do
+    register Sinatra::Reloader
   end
 
   get '/check' do
@@ -96,7 +102,7 @@ class ResultServer < Sinatra::Base
     r = Result.new(name: name, **opts)
     r.save
     alert_setup(name, opts[:timeout], opts[:to])
-    alert(name, opts[:result], opts[:rev], otps2msg(name, opts), r.id) if /OK/ !~ opts[:result]
+    alert(name, opts[:result], opts[:rev], otps2msg(name, opts), r.id) unless r.success?
     r.id
   end
 
@@ -135,7 +141,7 @@ class ResultServer < Sinatra::Base
     ta = Time.at(tb_sec - days * 60 * 60 * 24)
     tb = Time.at(tb_sec)
     results = Result.where(name: name).where('updated_at > ? and updated_at <= ?', ta, tb).order(updated_at: :desc)
-    erb :results_each_name, locals: {name: name, results: results, days: days}
+    erb :results_each_name, locals: {name: name, results: results, days: days, ta: ta, tb: tb}
   end
 
   get '/results/:name' do |name|
@@ -156,6 +162,17 @@ class ResultServer < Sinatra::Base
   end
 
   helpers do
+    if development?
+      def style
+        File.read('views/style.css')
+      end
+    else
+      STYLE = File.read('views/style.css')
+      def style
+        STYLE
+      end
+    end
+
     def h(text)
       Rack::Utils.escape_html(text)
     end
@@ -225,6 +242,10 @@ end
 
 class Result < ActiveRecord::Base
   after_commit :update_test_status
+
+  def success?
+    /OK/ =~ self.result
+  end
 
   def pretty_elapsed_time
     if t = self.elapsed_time&.to_i
