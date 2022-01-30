@@ -77,6 +77,7 @@ trunk-no-theap:
   loop_minimum_duration: 3600
 trunk-iseq_binary:
   arg: --add-env=RUBY_ISEQ_DUMP_DEBUG=to_binary
+  loop_minimum_duration: 3600
 trunk-iseq_binary-nopara:
   arg: --add-env=RUBY_ISEQ_DUMP_DEBUG=to_binary --no-parallel
 trunk-cross-mingw64:

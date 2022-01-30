@@ -64,7 +64,9 @@ tests = {
     trunk-repeat50
     trunk-random-repeat
 
+    trunk-gc-asserts
     trunk-asserts
+    trunk-iseq_binary
     trunk-mjit
     trunk-mjit-wait
     trunk-no-mjit
