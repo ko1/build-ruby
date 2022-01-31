@@ -292,7 +292,14 @@ end
 def otps2msg name, opts
   if json = opts[:desc_json]
     summary = JSON.parse(json).map{|key, val|
-      "#{key}: #{PP.pp(val, '')}"
+      case val
+      when String
+        "#{key}: #{val}"
+      when Array
+        "#{key}\n" + val.map{|(_lineno, line)|
+          "  " + line
+        }.join("\n")
+      end
     }.join("\n")
 
     summary = summary[0..8000] + '...' if summary.size > 8000
