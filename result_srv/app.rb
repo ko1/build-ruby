@@ -54,6 +54,22 @@ class ResultServer < Sinatra::Base
     Zlib::GzipReader.open("logfiles/#{name}.gz"){|gz| gz.read}
   end
 
+  get '/failures' do
+    days = params['d']&.to_i || 3
+
+    #                    start
+    # --ta---------------tb---------> time
+    #    <===  days  ====>
+    tb_sec = params['start']&.to_i || Time.now.to_i
+    ta = Time.at(tb_sec - days * 60 * 60 * 24)
+    tb = Time.at(tb_sec)
+    results = Result
+      .where('updated_at > ? and updated_at <= ?', ta, tb)
+      .where('result like "%NG%"')
+      .order(updated_at: :desc)
+    erb :failure_results, locals: {results: results, days: days, ta: ta, tb: tb}
+  end
+
   get '/logfiles/:name' do
     name = params['name']
     #content_type 'text/plain'

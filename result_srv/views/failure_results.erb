@@ -1,0 +1,30 @@
+<%= style %>
+<div><a href='/'>top</a></div>
+
+<h1>Failure results</h1>
+
+<p>
+  <%= ta %> ~ <%= tb %>
+</p>
+
+<table>
+  <% results.each{|result| %>
+    <tr>
+      <td><%= result.name %></td>
+      <td><a href='/results/<%=h result.name %>/<%=h result.id %>'><%= result.updated_at %></a></td>
+      <td class='<%= result.success? ? 'success' : 'failed' %>_line'><%=h result.result %> </td>
+      <td><%= (link = rev_link(result)) ? "(#{link})" : '' %></td>
+      <td>
+      <% if result.detail_link %>
+	 <a href='<%= result.detail_link %>'>[LOG]</a>
+      <% end %>
+      </td>
+      <td><%= result.pretty_elapsed_time %></td>
+    </tr>
+  <% } %>
+</table>
+
+<p>
+  <%= each_name_navi(results.last, days) %>
+</p>
+
