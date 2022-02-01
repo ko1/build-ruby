@@ -67,11 +67,11 @@ tests = {
     trunk-gc-asserts
     trunk-asserts
     trunk-iseq_binary
+    trunk-mjit
     trunk-no-mjit
     trunk-yjit
     trunk-O0
   },
-  # trunk-mjit
   # trunk-mjit-wait
 }
 
