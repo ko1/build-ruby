@@ -35,27 +35,16 @@ class ResultServer < Sinatra::Base
   # actions
   get '/' do
     @test_status = TestStatus.index_all_latest
-    erb :results
+    erb :index
   end
 
-  get '/latest' do
-    @test_status = TestStatus.index_all_latest
-    erb :results
-  end
-
-  get '/results/' do
+  get '/all' do
     @test_status = TestStatus.order(:name)
-    erb :results
+    erb :index
   end
 
-  def log_data name
-    File.read("logfiles/#{name}")
-  rescue
-    Zlib::GzipReader.open("logfiles/#{name}.gz"){|gz| gz.read}
-  end
-
-  get '/failures' do
-    days = params['d']&.to_i || 3
+  def query_period days = 3
+    days = params['d']&.to_i || days
 
     #                    start
     # --ta---------------tb---------> time
@@ -63,11 +52,65 @@ class ResultServer < Sinatra::Base
     tb_sec = params['start']&.to_i || Time.now.to_i
     ta = Time.at(tb_sec - days * 60 * 60 * 24)
     tb = Time.at(tb_sec)
+    return days, ta, tb
+  end
+
+  get '/results' do
+    redirect to '/latest_results'
+  end
+
+  get '/results/' do
+    redirect to '/latest_results'
+  end
+
+  get '/latest_results' do
+    days, ta, tb = query_period(1)
+
+    results = Result
+      .where('updated_at > ? and updated_at <= ?', ta, tb)
+      .order(updated_at: :desc)
+
+    erb :results, locals: {title: 'Recent results', results: results, days: days, ta: ta, tb: tb, name: nil}
+  end
+
+  get '/failure_results' do
+    days, ta, tb = query_period
+
     results = Result
       .where('updated_at > ? and updated_at <= ?', ta, tb)
       .where('result like "%NG%"')
       .order(updated_at: :desc)
-    erb :failure_results, locals: {results: results, days: days, ta: ta, tb: tb}
+
+    erb :results, locals: {title: 'Recent failure results', results: results, days: days, ta: ta, tb: tb, name: nil}
+  end
+
+  get '/results/:name' do |name|
+    days, ta, tb = query_period
+
+    results = Result
+      .where(name: name)
+      .where('updated_at > ? and updated_at <= ?', ta, tb)
+      .order(updated_at: :desc)
+      erb :results, locals: {title: "Recent results of #{name}", name: name, results: results, days: days, ta: ta, tb: tb}
+  end
+
+  get '/results/:name/' do |name|
+    redirect to("/results/#{name}")
+  end
+
+  get '/results/:name/:result_id' do |name, result_id|
+    begin
+      result = Result.find(result_id)
+      erb :result, locals: {name: name, result: result}
+    rescue ActiveRecord::RecordNotFound
+      'not found'
+    end
+  end
+
+  def log_data name
+    File.read("logfiles/#{name}")
+  rescue
+    Zlib::GzipReader.open("logfiles/#{name}.gz"){|gz| gz.read}
   end
 
   get '/logfiles/:name' do
@@ -147,36 +190,6 @@ class ResultServer < Sinatra::Base
     "http://ci.rvm.jp/results/#{name}/#{result_id}"
   end
 
-  def results_name name
-    days = params['d']&.to_i || 3
-
-    #                    start
-    # --ta---------------tb---------> time
-    #    <===  days  ====>
-    tb_sec = params['start']&.to_i || Time.now.to_i
-    ta = Time.at(tb_sec - days * 60 * 60 * 24)
-    tb = Time.at(tb_sec)
-    results = Result.where(name: name).where('updated_at > ? and updated_at <= ?', ta, tb).order(updated_at: :desc)
-    erb :results_each_name, locals: {name: name, results: results, days: days, ta: ta, tb: tb}
-  end
-
-  get '/results/:name' do |name|
-    results_name name
-  end
-
-  get '/results/:name/' do |name|
-    results_name name
-  end
-  
-  get '/results/:name/:result_id' do |name, result_id|
-    begin
-      result = Result.find(result_id)
-      erb :results_each_time, locals: {name: name, result: result}
-    rescue ActiveRecord::RecordNotFound
-      'not found'
-    end
-  end
-
   helpers do
     if development?
       def style
@@ -189,8 +202,32 @@ class ResultServer < Sinatra::Base
       end
     end
 
+    def banner result = nil
+      if result
+        "<div><a href='/'>top</a> / #{link_to_name_of result}</div>"
+      else
+        "<div><a href='/'>top</a>"
+      end
+    end
+
     def h(text)
       Rack::Utils.escape_html(text)
+    end
+
+    def link_to_log_of result
+      if result.detail_link
+        "<a href='#{result.detail_link}'>[LOG]</a>"
+      end
+    end
+
+    def link_to_name_of result
+      name = h(result.name)
+      "<a href='/results/#{name}'>#{name}</a>"
+    end
+
+    def link_to result
+      name = h(result.name)
+      "<a href='/results/#{name}/#{result.id}'>#{result.updated_at}</a>"
     end
 
     def rev_link result

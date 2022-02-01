@@ -1,13 +1,11 @@
 <%= style %>
-<div><a href='/'>top</a> / <a href='/results/<%=h result.name %>'><%=h result.name %></a></div>
+<%= banner result %>
 
-<h1><a href=''>Result of <%= name %> at <%= result.updated_at %></a></h1>
+<h1>Result of <%= name %> at <%= link_to result %></h1>
 <p>
     <ul>
       <li class='<%= /OK/ =~ result.result ? 'success_line' : 'failed_line'%>'><%=h result.result %>
-      <% if result.detail_link %>
-	 <a href='<%=h log_link = result.detail_link %>'>[LOG]</a>
-      <% end %>
+        <%= link_to_log_of result %>
       </li>
       <% if rev = result.rev %>
         <li>rev: <%= rev_link result %></li>
@@ -18,7 +16,7 @@
         <li>test-all: <%=h desc[:test_all] || '' %></li>
         <li>test-spec: <%=h desc[:test_spec] || '' %></li>
         <li>commands:<pre><table><% desc[:exit_results].each do |(lineno, line)|
-          %><%= exit_results_line(log_link, lineno, line) %>
+          %><%= exit_results_line(result.detail_link, lineno, line) %>
 <% end %></table></pre>
 	</li>
       <% end %>

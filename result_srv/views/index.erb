@@ -1,2 +1,59 @@
+<%= style %>
 
-Hello
+<h1>Overview at <%= Time.now %></h1>
+
+<table>
+  <tr>
+    <th>Configuration</th>
+    <th>Latest trial</th>
+    <th></th>
+    <th>Stat in last 24H<br/>errors / tries</th>
+    <th>Stat in last 3 days<br/>errors / tries</th>
+    <th>Stat in last 7 days<br/>errors / tries</th>
+    <th>Errors in last 24H</th>
+  </tr>
+
+  <% @test_status.each do |test| %>
+    <tr>
+      <% r = test.result; success_status = r.success? ? 'success' : 'failed' %>
+      <% t = r.updated_at %>
+      <td><a href='/results/<%=h test.name %>'><%=h test.name %></a></td>
+      <td class='<%= success_status %>_line'><a href='/results/<%=h test.name %>/<%=h r.id %>'><%=h r.result %>
+         <%=h Time.at(t).strftime('%H:%M') %>
+        </a>
+        (<%= good_diff(t) %> ago) 
+      <% if r.rev %>
+        (<%= rev_link(r) %>)
+      <% end %>
+      </td>
+      <td>
+	<% if next_alert_time = WATCH_LIST.dig(r.name, :alerted) %>
+	timeout (next alert: <%= Time.at(next_alert_time) %>)
+        <% end %>
+      </td>
+      <td align='center'><div style='font-family: monospace; white-space: pre;'><%= recent_failures_stat(test.name, 1) %></div></td>
+      <td align='center'><div style='font-family: monospace; white-space: pre;'><%= recent_failures_stat(test.name, 3) %></div></td>
+      <td align='center'><div style='font-family: monospace; white-space: pre;'><%= recent_failures_stat(test.name, 7) %></div></td>
+      <td>
+        <% recent_failures(test.name, 1).each do |result| %>
+          [<a href='/results/<%=h result.name %>/<%=h result.id %>'><%=h result.updated_at.strftime('%H:%M') %></a>]
+        <% end %>
+      </td>
+    </tr>
+  <% end %>
+  <tr>
+    <td></td>
+    <td>TOTAL</td>
+    <td></td>
+    <td align='center'><div style='font-family: monospace; white-space: pre;'><%= recent_failures_stat(nil, 1) %></div></td>
+    <td align='center'><div style='font-family: monospace; white-space: pre;'><%= recent_failures_stat(nil, 3) %></div></td>
+    <td align='center'><div style='font-family: monospace; white-space: pre;'><%= recent_failures_stat(nil, 7) %></div></td>
+  </tr>
+</table>
+
+<p>
+  <ul>
+    <li><a href='/latest_results'>Recent results</a></li>
+    <li><a href='/failure_results'>Recent failure results</a></li>
+  </ul>
+</p>
