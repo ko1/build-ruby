@@ -169,7 +169,7 @@ class ResultServer < Sinatra::Base
     name = par:name
 
     # receive
-    opts = params_set(:result, :desc, :desc_json, :rev, :elapsed_time, :detail_link, :memo, :details)
+    opts = params_set(:result, :desc, :desc_json, :rev, :elapsed_time, :detail_link, :core_link, :memo, :details)
 
     # write to file
     details = opts.delete(:details)

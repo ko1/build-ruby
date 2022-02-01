@@ -8,6 +8,7 @@ require 'yaml/store'
 require 'json'
 require 'logger'
 require 'benchmark'
+require 'fileutils'
 
 require_relative 'load_env'
 
@@ -124,9 +125,64 @@ def check_logfile logfile
   r
 end
 
+
+CORE_DIR = '/tmp/cores'
+CORE_COLLECT_DIR = "/tmp/collected_cores"
+
+def setup_collect_cores
+  unless File.exist?(CORE_DIR)
+    FileUtils.mkdir(CORE_DIR)
+    FileUtils.chmod(0777, CORE_DIR)
+  end
+
+  Dir.glob(File.join(CORE_DIR, "core.#{Process.uid}.*")) do |core|
+    FileUtils.rm(core, force: true)
+  end
+
+  # collect all cores
+  Process.setrlimit Process::RLIMIT_CORE, -1
+end
+
+def collect_cores
+  dst_dir = "#{CORE_COLLECT_DIR}/#{Time.now.to_i}"
+  FileUtils.mkdir_p(dst_dir)
+
+  cores = Dir.glob(File.join(CORE_DIR, "core.#{Process.uid}.*")).map do |core|
+    # readelf -n core.5.30119 | egrep '\s+/' | sort | uniq
+    related_files = `readelf -n #{core}`.each_line.map{|line|
+      if /^\s+(\/.+)$/ =~ line && !$1.start_with?('/usr')
+        $1
+      end
+    }.compact.uniq
+    related_files.each{|file|
+      dst = File.join(dst_dir, file)
+      FileUtils.mkdir_p(File.dirname(dst))
+      FileUtils.cp file, dst
+    }
+    FileUtils.mv core, dst_dir
+    core
+  end
+
+  unless cores.empty?
+    # clean older archives
+    Dir.glob(File.join(CORE_COLLECT_DIR, '*.tar.gz')) do |archive|
+      if File.mtime(archive) < Time.now - (60 * 60 * 24 * 7) # 7 days
+        FileUtils.rm(archive, force: true, verbose: true)
+      end
+    end
+
+    archive = "#{dst_dir}.tar.gz"
+    system("tar acf #{archive} -C #{File.dirname(dst_dir)} #{File.basename(dst_dir)}")
+    FileUtils.rm_rf dst_dir
+    archive += " (#{File.size(archive)})"
+  end
+end
+
 UNAME_A = `uname -a`
 
 def build_report target_name
+  setup_collect_cores
+
   target = TARGETS[target_name]
 
   if /(.+):(\d+)\z/ =~ target.report_host
@@ -156,6 +212,9 @@ def build_report target_name
   # check log file
   r = check_logfile(logfile)
 
+  # check core files
+  core_info = collect_cores
+
   # send result
 
   h = {
@@ -166,6 +225,7 @@ def build_report target_name
     desc_json: JSON.dump(r),
     memo: UNAME_A,
     elapsed_time: tm.real,
+    core_link: core_info,
     timeout: Integer(target.build_timeout * 1.5),
     to: target.alert_to,
 
@@ -190,7 +250,7 @@ def build_report target_name
   else
     clean_all target_name if state[:failure] >= 1
     state[:failure]  += 1
-    state[:loop_dur] += 60 if state[:loop_dur] < 60 * 60 * 3 # 1 hour
+    state[:loop_dur] = (state[:loop_dur] * 1.2).to_i if state[:loop_dur] < 60 * 60 * 3 # 1 hour
     state[:total_failure] = 0 unless state.has_key? :total_failure
     state[:total_failure] += 1
   end
