@@ -3,12 +3,13 @@
 
 <h1><%= title %></h1>
 
-<div>
-  <span class='success_line'>OK: <%= results.count{|r| r.success?} %></span>, 
+<p>
+  <span class='success_line'>OK: <%= success_cnt = results.count{|r| r.success?} %></span>, 
   <span class='failed_line'>NG: <%= results.count{|r| !r.success?} %></span>, 
   <%= ta %> ~ <%= tb %>
-</div>
+</p>
 
+<% if success_cnt > 0 %>
 <script language="javascript" type="text/javascript">
 function only_failed(checked) {
     for (var e of document.getElementsByClassName('success_result')) {
@@ -26,6 +27,7 @@ function only_failed(checked) {
 <p>
   <input type='checkbox' onclick='only_failed(this.checked)'  /> Show only failed result.<br/>
 </p>
+<% end %>
 
 <table>
   <% results.each{|result| %>
@@ -43,5 +45,5 @@ function only_failed(checked) {
 </table>
 
 <p>
-  <%= each_name_navi(results.last, days) %>
+  <%= results_navi(ta.to_i, tb.to_i, days) %>
 </p>

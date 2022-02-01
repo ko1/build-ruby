@@ -285,10 +285,10 @@ class ResultServer < Sinatra::Base
       "<tr><td align='right'><a #{link}class='lines' alt='#{lineno}'></a></td><td>#{line_class}#{h(line)}</span></td></tr>"
     end
 
-    def each_name_navi last_result, days
-      if last_result
-        "<a href='?start=#{last_result.updated_at.to_i}&d=#{days}'>previous #{days} days</a>"
-      end
+    def results_navi ta, tb, days
+      days_str = days == 1 ? 'day' : 'days'
+      "<a href='?start=#{ta}&d=#{days}'>prev #{days} #{days_str}</a>, " \
+      "<a href='?start=#{tb+(60*60*24*days)}&d=#{days}'>next #{days} #{days_str}</a>"
     end
   end
 end
