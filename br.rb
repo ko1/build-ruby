@@ -174,7 +174,7 @@ def collect_cores
     archive = "#{dst_dir}.tar.gz"
     system("tar acf #{archive} -C #{File.dirname(dst_dir)} #{File.basename(dst_dir)}")
     FileUtils.rm_rf dst_dir
-    archive += " (#{File.size(archive) / (1024 * 1024)} MB)"
+    archive
   end
 end
 
@@ -213,7 +213,7 @@ def build_report target_name
   r = check_logfile(logfile)
 
   # check core files
-  core_info = collect_cores
+  core_archive = collect_cores
 
   # send result
 
@@ -225,7 +225,7 @@ def build_report target_name
     desc_json: JSON.dump(r),
     memo: UNAME_A,
     elapsed_time: tm.real,
-    core_link: core_info,
+    core_link: (core_archive && open(core_archive, 'rb')),
     timeout: Integer(target.build_timeout * 1.5),
     to: target.alert_to,
 
@@ -235,10 +235,21 @@ def build_report target_name
   }
 
   begin
-    net = Net::HTTP.new(report_host, report_port)
-    p net.put('/results', URI.encode_www_form(h))
+    if false
+      http = Net::HTTP.new(report_host, report_port)
+      p http.put('/results', URI.encode_www_form(h))
+    else
+      data = h.map{|k, v| [k.to_s, (v.respond_to?(:read) ? v : v.to_s)] if v}.compact
+      req = Net::HTTP::Put.new('/results')
+      req.set_form(data, 'multipart/form-data')
+      Net::HTTP.new(report_host, report_port).start do |http|
+        p http.request(req)
+      end
+    end
   rescue SocketError, Net::ReadTimeout => e
     p e
+  ensure
+    FileUtils.rm_f core_archive if core_archive
   end
 
   # cleanup

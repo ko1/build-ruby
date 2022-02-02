@@ -22,9 +22,7 @@
          <%=h Time.at(t).strftime('%H:%M') %>
         </a>
         (<%= good_diff(t) %> ago) 
-      <% if r.rev %>
-        (<%= rev_link(r) %>)
-      <% end %>
+        <%= link_to_rev_of r %>
       </td>
       <td>
 	<% if next_alert_time = WATCH_LIST.dig(r.name, :alerted) %>

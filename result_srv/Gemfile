@@ -9,6 +9,8 @@ gem 'unicorn'
 gem 'sqlite3'
 gem 'slack-incoming-webhooks'
 gem 'rack-handlers'
+gem 'webrick'
+gem 'puma'
 
 group :development do
   gem 'shotgun'

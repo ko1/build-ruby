@@ -8,6 +8,7 @@ require 'uri'
 require 'cgi/util'
 require 'zlib'
 require 'pp'
+require 'fileutils'
 require "sinatra/reloader" if development?
 
 # Time.zone = "Tokyo"
@@ -146,6 +147,14 @@ class ResultServer < Sinatra::Base
     end
   end
 
+  get '/core_data/:name' do |name|
+    if /\A\d+\.tar\.gz\z/ =~ name && File.exist?(path = File.join('core_data', name))
+      send_file path
+    else
+      raise Sinatra::NotFound
+    end
+  end
+
   def par v
     params[v.to_s]
   end
@@ -154,6 +163,18 @@ class ResultServer < Sinatra::Base
     set.each_with_object({}){|k, h|
       h[k.to_sym] = params[k.to_s]
     }
+  end
+
+  def dir_quota dir, capa
+    files = Dir.glob(File.join(dir, '*')).sort_by{|path| File.mtime(path)}
+    sum = files.sum{|path| File.size(path)}
+
+    while sum > capa
+      path = files.shift
+      next unless File.file? path
+      sum -= File.size(path)
+      FileUtils.rm_f(path, verbose: true)
+    end
   end
 
   def db_write name, **opts
@@ -170,11 +191,11 @@ class ResultServer < Sinatra::Base
 
     # receive
     opts = params_set(:result, :desc, :desc_json, :rev, :elapsed_time, :detail_link, :core_link, :memo, :details)
-
-    # write to file
     details = opts.delete(:details)
     logname = opts.delete(:detail_link)
+    core_data = opts.delete(:core_link)
 
+    # write log file
     if details && logname
       Zlib::GzipWriter.open("logfiles/#{logname}.gz"){|f|
         f.write details
@@ -184,8 +205,19 @@ class ResultServer < Sinatra::Base
       p name: name, details: details, logname: logname
     end
 
+    opts[:core_link] = 'true' if core_data
+
     # write to DB
     result_id = db_write(name, **opts)
+
+    # write core data
+    if core_data && (tempfile = core_data['tempfile'])
+      dir_quota 'core_data', 1024 * 1024 * 1024 # 1GB
+      FileUtils.mkdir_p("core_data")
+      # File.binwrite("core_data/#{result_id}.tar.gz", core_data['tempfile'].read)
+      FileUtils.cp(tempfile.path, "core_data/#{result_id}.tar.gz")
+      tempfile.close!
+    end
 
     "http://ci.rvm.jp/results/#{name}/#{result_id}"
   end
@@ -230,9 +262,21 @@ class ResultServer < Sinatra::Base
       "<a href='/results/#{name}/#{result.id}'>#{result.updated_at}</a>"
     end
 
-    def rev_link result
+    def link_to_core_of result
+      if result.core_link
+        name = h(result.name)
+        path = "core_data/#{result.id}.tar.gz"
+        begin
+          size = File.size(path)
+          "[<a href='/core_data/'>CORE</a> (#{size / (1024 * 1024)} MB)]" if size > 0
+        rescue Errno::ENOENT
+        end
+      end
+    end
+
+    def link_to_rev_of result
       if rev = result.rev
-        "<a href='https://github.com/ruby/ruby/commit/#{h(rev)}'>#{h(rev)}</a>"
+        "(<a href='https://github.com/ruby/ruby/commit/#{h(rev)}'>#{h(rev)}</a>)"
       end
     end
 

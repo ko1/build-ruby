@@ -5,14 +5,8 @@
 <p>
     <ul>
       <li class='<%= /OK/ =~ result.result ? 'success_line' : 'failed_line'%>'><%=h result.result %>
-        <%= link_to_log_of result %>
+        <%= link_to_rev_of result %><%= link_to_log_of result %><%= link_to_core_of result %>
       </li>
-      <% if rev = result.rev %>
-        <li>rev: <%= rev_link result %></li>
-      <% end %>
-      <% if result.core_link %>
-        <li>core: <%= h result.core_link %></li>
-      <% end %>
       <% if result.desc_json && desc = JSON.parse(result.desc_json, symbolize_names: true) %>
         <li>test-all: <%=h desc[:test_all] || '' %></li>
         <li>test-spec: <%=h desc[:test_spec] || '' %></li>
