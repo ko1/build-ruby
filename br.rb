@@ -174,7 +174,7 @@ def collect_cores
     archive = "#{dst_dir}.tar.gz"
     system("tar acf #{archive} -C #{File.dirname(dst_dir)} #{File.basename(dst_dir)}")
     FileUtils.rm_rf dst_dir
-    archive += " (#{File.size(archive)})"
+    archive += " (#{File.size(archive) / (1024 * 1024)} MB)"
   end
 end
 
