@@ -323,13 +323,9 @@ class TestStatus < ActiveRecord::Base
   belongs_to :result
 
   def self.update_latest(result)
-    if test = self.where(name: result.name).first
-      test.update(result: result, visible: true)
-      test.save
-    else
-      test = TestStatus.new(name: result.name, visible: true, result: result)
-      test.save
-    end
+    test = self.find_or_create_by(name: result.name)
+    test.update(result: result, visible: true)
+    test.save
   end
 
   def self.index_all
