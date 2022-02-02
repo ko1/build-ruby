@@ -57,7 +57,9 @@ trunk-asserts:
   arg: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1 -fno-inline"'   --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
   build_timeout: 21600
 trunk-asserts-nopara: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1"' --no-parallel --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
-trunk-gc-asserts:     --build_opts='DEFS="-DRGENGC_CHECK_MODE=2"'                              --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
+trunk-gc-asserts:
+  arg: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2"'                              --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
+  build_timeout: 21600
 trunk-vm-asserts:     --build_opts='DEFS="-DVM_CHECK_MODE=2"'
 trunk-mjit:
   arg: --configure_opts=cppflags="-DMJIT_FORCE_ENABLE" --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30 --test_opts='RUN_OPTS="--disable-gems --mjit-debug=-ggdb3"'
