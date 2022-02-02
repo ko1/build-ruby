@@ -211,7 +211,7 @@ class ResultServer < Sinatra::Base
     end
 
     def h(text)
-      Rack::Utils.escape_html(text)
+      text && Rack::Utils.escape_html(text)
     end
 
     def link_to_log_of result

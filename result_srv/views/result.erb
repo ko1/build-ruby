@@ -13,9 +13,7 @@
       <% if result.core_link %>
         <li>core: <%= h result.core_link %></li>
       <% end %>
-      <% if result.desc_json
-           desc = JSON.parse(result.desc_json, symbolize_names: true)
-       %>
+      <% if result.desc_json && desc = JSON.parse(result.desc_json, symbolize_names: true) %>
         <li>test-all: <%=h desc[:test_all] || '' %></li>
         <li>test-spec: <%=h desc[:test_spec] || '' %></li>
         <li>commands:<pre><table><% desc[:exit_results].each do |(lineno, line)|

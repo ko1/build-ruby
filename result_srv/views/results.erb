@@ -40,6 +40,7 @@ function only_failed(checked) {
       <td><%= (link = rev_link(result)) ? "(#{link})" : '' %></td>
       <td><%= link_to_log_of result %></td>
       <td><%= result.pretty_elapsed_time %></td>
+      <td><%= h result.core_link %></td>
     </tr>
   <% } %>
 </table>
