@@ -23,6 +23,11 @@
   margin-right: 0.5em;
 }
 
+.warn_line::before {
+  content: '🟨';
+  margin-right: 0.5em;
+}
+
 .stderr_line {
   font-family: monospace;
   white-space: pre;

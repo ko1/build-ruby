@@ -8,8 +8,8 @@
         <%= link_to_rev_of result %><%= link_to_log_of result %><%= link_to_core_of result %>
       </li>
       <% if result.desc_json && desc = JSON.parse(result.desc_json, symbolize_names: true) %>
-        <li>test-all: <%=h desc[:test_all] || '' %></li>
-        <li>test-spec: <%=h desc[:test_spec] || '' %></li>
+        <li><%= pretty_test_result :test_all, desc %></li>
+        <li><%= pretty_test_result :test_spec, desc %></li>
         <li>commands:<pre><table><% desc[:exit_results].each do |(lineno, line)|
           %><%= exit_results_line(result.detail_link, lineno, line) %>
 <% end %></table></pre>

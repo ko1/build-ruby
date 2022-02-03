@@ -304,7 +304,7 @@ class ResultServer < Sinatra::Base
       Result.where(name: name).where("updated_at > ?", tm).where("result NOT LIKE ?", "OK%").order(:updated_at, :desc).limit(5)
     end
 
-    def good_diff(t)
+    def pretty_past_time_from(t)
       d = Time.now - t
       case
       when d < 60
@@ -316,6 +316,19 @@ class ResultServer < Sinatra::Base
       end
     end
 
+    def pretty_test_result test, desc
+      case line = desc[test]
+      when / 0 failures, 0 errors/
+        line_class = 'success'
+      when / failures, .+ errors/
+        line_class = 'failed'
+      else
+        line_class = 'warn'
+      end
+
+      "<span class='#{line_class}_line'>#{test.to_s.tr('_', '-')}: #{h line} </span>"
+    end
+
     # <a href=<%= "#{log_link}\#L#{lineno}" || '' %> class='lineno'>L<%= lineno.to_i %></a>	<%= emph_error() %>
     def exit_results_line log_link, lineno, line
       line = line.split("\r").first # TODO: to be deleted
@@ -325,7 +338,8 @@ class ResultServer < Sinatra::Base
         line = $1
       when /exit with 0\./
         line_class = '<span class="success_line">'
-      when /exit with \d+\./
+      # when /exit with \d+\./
+      else
         line_class = '<span class="failed_line">'
       end
       link = "href='#{log_link}\#L#{lineno}' " if log_link
