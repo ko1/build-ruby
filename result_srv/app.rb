@@ -220,6 +220,9 @@ class ResultServer < Sinatra::Base
     end
 
     "http://ci.rvm.jp/results/#{name}/#{result_id}"
+  rescue Exception => e
+    pp [e, e.backtrace]
+    raise
   end
 
   helpers do
