@@ -128,8 +128,11 @@ class ResultServer < Sinatra::Base
         if /T([\d:]+)\..+\s(INFO|ERROR) -- : (.*)$/ =~ line
           time, info = CGI.escapeHTML($1), CGI.escapeHTML($3)
           error_prefix = '<span class="stderr_prefix"></span>' if $2 == 'ERROR'
-          @data << "<a class='lines' alt='#{time}' id='#{link}' href='\##{link}'></a>#{error_prefix}#{info}"
+        else
+          time = '**:**:**'
+          info = CGI.escapeHTML(line.chomp)
         end
+          @data << "<a class='lines' alt='#{time}' id='#{link}' href='\##{link}'></a>#{error_prefix}#{info}"
       }
       erb :logfile
     rescue => e

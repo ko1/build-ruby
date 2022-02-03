@@ -143,7 +143,7 @@ def setup_collect_cores
   Process.setrlimit Process::RLIMIT_CORE, -1
 end
 
-def collect_cores
+def collect_cores logfile
   dst_dir = "#{CORE_COLLECT_DIR}/#{Time.now.to_i}"
   FileUtils.mkdir_p(dst_dir)
 
@@ -154,11 +154,21 @@ def collect_cores
         $1
       end
     }.compact.uniq
+    exec = nil
     related_files.each{|file|
       dst = File.join(dst_dir, file)
       FileUtils.mkdir_p(File.dirname(dst))
       FileUtils.cp file, dst
+      exec = file if /ruby$/ =~ file # maybe ...
     }
+
+    if exec
+      # cmd = "gdb -batch -se #{exec} -c #{core} -ex 'info th' -ex 'thread apply all bt'"
+      cmd = "gdb -batch -se #{exec} -c #{core} -x gdbscript"
+      open(logfile, 'a'){|f| f.puts "\n$ #{cmd}"}
+      system("#{cmd} >> #{logfile}")
+    end
+
     FileUtils.mv core, dst_dir
     core
   end
@@ -213,7 +223,7 @@ def build_report target_name
   r = check_logfile(logfile)
 
   # check core files
-  core_archive = collect_cores
+  core_archive = collect_cores logfile
 
   # send result
 
@@ -259,7 +269,7 @@ def build_report target_name
     state[:total_success] = 0 unless state.has_key? :total_success
     state[:total_success] += 1
   else
-    clean_all target_name if state[:failure] >= 1
+    clean_all target_name if state[:failure] >= 1000
     state[:failure]  += 1
     state[:loop_dur] = (state[:loop_dur] * 1.2).to_i if state[:loop_dur] < 60 * 60 * 3 # 1 hour
     state[:total_failure] = 0 unless state.has_key? :total_failure

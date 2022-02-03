@@ -21,7 +21,7 @@
       <td class='<%= success_status %>_line'><a href='/results/<%=h test.name %>/<%=h r.id %>'><%=h r.result %>
          <%=h Time.at(t).strftime('%H:%M') %>
         </a>
-        (<%= pretty_past_time_from(t) %> ago) 
+        (<%= pretty_past_time_from(t) %> ago)
         <%= link_to_rev_of r %>
       </td>
       <td>
