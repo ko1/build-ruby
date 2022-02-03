@@ -1,3 +1,7 @@
 docker/.gist
 docker/.gitconfig
 result_srv/logfiles
+default_targets.rb
+result_srv/.bundle/
+result_srv/core_data/
+result_srv/db/schema.rb
