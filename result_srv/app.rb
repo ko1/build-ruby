@@ -268,7 +268,7 @@ class ResultServer < Sinatra::Base
         path = "core_data/#{result.id}.tar.gz"
         begin
           size = File.size(path)
-          "[<a href='/core_data/'>CORE</a> (#{size / (1024 * 1024)} MB)]" if size > 0
+          "[<a href='/core_data/#{path}'>CORE</a> (#{size / (1024 * 1024)} MB)]" if size > 0
         rescue Errno::ENOENT
         end
       end
