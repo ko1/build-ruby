@@ -215,7 +215,7 @@ class ResultServer < Sinatra::Base
       dir_quota 'core_data', 1024 * 1024 * 1024 # 1GB
       FileUtils.mkdir_p("core_data")
       # File.binwrite("core_data/#{result_id}.tar.gz", core_data['tempfile'].read)
-      FileUtils.cp(tempfile.path, "core_data/#{result_id}.tar.gz")
+      FileUtils.cp(tempfile.path, "core_data/#{result_id}.tar.gz", verbose: true)
       tempfile.close!
     end
 
