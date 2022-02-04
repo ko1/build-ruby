@@ -1,6 +1,20 @@
 FROM ubuntu:focal
 MAINTAINER Koichi Sasada
 
+RUN sed -ie 's/= 1$/= 0/g' /etc/sysctl.d/10-ptrace.conf
+
+# add user
+RUN mkdir /home/tester && \
+    groupadd -g 1000 dev && \
+    useradd -g dev -G sudo -s /bin/bash tester && \
+    echo 'tester:tester' | chpasswd && \
+    chown tester /home/tester
+
+RUN mkdir /home/ko1 && \
+    useradd -g dev -G sudo -s /bin/bash -u 1001 ko1 && \
+    echo 'ko1:ko1' | chpasswd && \
+    chown ko1 /home/ko1
+
 RUN \
   apt-get update && \
   apt-get install -y apt-utils && \
@@ -16,25 +30,3 @@ RUN \
 
 # memo: https://qiita.com/yagince/items/deba267f789604643bab
 #       why git is at the last. 
-
-RUN gem install gist
-
-RUN sed -ie 's/= 1$/= 0/g' /etc/sysctl.d/10-ptrace.conf
-
-# add user
-RUN mkdir /home/tester && \
-    groupadd -g 1000 dev && \
-    useradd -g dev -G sudo -s /bin/bash tester && \
-    echo 'tester:tester' | chpasswd && \
-    chown tester /home/tester
-
-RUN mkdir /home/ko1 && \
-    useradd -g dev -G sudo -s /bin/bash -u 1001 ko1 && \
-    echo 'ko1:ko1' | chpasswd && \
-    chown ko1 /home/ko1
-
-COPY .gist /home/ko1/.gist
-COPY .gitconfig /home/ko1/.gitconfig
-
-RUN chmod 600 /home/ko1/.gist && chown ko1 /home/ko1/.gist
-
