@@ -118,10 +118,12 @@ class BuildRuby
 
     if process_num && no_parallel == false
       build_opts ||= "-j#{process_num}"
+      btest_opts ||= "-j#{process_num}"
       test_opts  ||= "TESTS='-j#{process_num}'"
     end
     @configure_opts = configure_opts || ['--enable-shared']
     @build_opts = build_opts
+    @btest_opts = btest_opts
     @test_opts = test_opts
     @incremental = incremental
 
@@ -362,7 +364,7 @@ class BuildRuby
 
   def test_btest
     builddir{
-      cmd "#{@make} yes-btest TESTOPTS=-q #{@test_opts}", on_failure: :skip
+      cmd "#{@make} yes-btest TESTOPTS='-q #{@btest_opts}'", on_failure: :skip
     }
   end
 
