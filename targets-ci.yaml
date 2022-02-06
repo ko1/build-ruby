@@ -110,5 +110,5 @@ trunk-pthread-coroutine:
 trunk-yjit:
   arg: --configure_opts=cppflags=-DYJIT_FORCE_ENABLE
 trunk-yjit-asserts:
-  arg: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1 --configure_opts=cppflags=-DYJIT_FORCE_ENABLE
+  arg: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1"' --configure_opts=cppflags=-DYJIT_FORCE_ENABLE
   build_timeout: 208000
