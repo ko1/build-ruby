@@ -217,8 +217,10 @@ class ResultServer < Sinatra::Base
     if core_data && (tempfile = core_data['tempfile'])
       dir_quota 'core_data', 1024 * 1024 * 1024 # 1GB
       FileUtils.mkdir_p("core_data")
+      dst_path = "core_data/#{result_id}.tar.gz"
       # File.binwrite("core_data/#{result_id}.tar.gz", core_data['tempfile'].read)
-      FileUtils.cp(tempfile.path, "core_data/#{result_id}.tar.gz", verbose: true)
+      FileUtils.cp(tempfile.path, dst_path, verbose: true)
+      FileUtils.chmod(0555, dst_path)
       tempfile.close!
     end
 
@@ -274,7 +276,7 @@ class ResultServer < Sinatra::Base
         path = "core_data/#{result.id}.tar.gz"
         begin
           size = File.size(path)
-          "[<a href='/#{path}'>CORE</a> (#{size / (1024 * 1024)} MB)]" if size > 0
+          "[<a href='http://www.atdot.net/~ko1/#{path}'>CORE</a> (#{size / (1024 * 1024)} MB)]" if size > 0
         rescue Errno::ENOENT
         end
       end
