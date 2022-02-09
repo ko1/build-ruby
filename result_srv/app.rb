@@ -150,14 +150,6 @@ class ResultServer < Sinatra::Base
     end
   end
 
-  get '/core_data/:name' do |name|
-    if /\A\d+\.tar\.gz\z/ =~ name && File.exist?(path = File.join('core_data', name))
-      send_file path
-    else
-      raise Sinatra::NotFound
-    end
-  end
-
   def par v
     params[v.to_s]
   end
