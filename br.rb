@@ -150,7 +150,7 @@ def collect_cores logfile
   cores = Dir.glob(File.join(CORE_DIR, "core.#{Process.uid}.*")).map do |core|
     # readelf -n core.5.30119 | egrep '\s+/' | sort | uniq
     related_files = `readelf -n #{core}`.each_line.map{|line|
-      if /^\s+(\/.+)$/ =~ line && !$1.start_with?('/usr')
+      if /^\s+(\/.+)$/ =~ line
         $1
       end
     }.compact.uniq
