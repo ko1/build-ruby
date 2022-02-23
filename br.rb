@@ -269,7 +269,7 @@ def build_report target_name
     state[:total_success] = 0 unless state.has_key? :total_success
     state[:total_success] += 1
   else
-    clean_all target_name if state[:failure] >= 1000
+    clean_all target_name if state[:failure] >= 2
     state[:failure]  += 1
     state[:loop_dur] = (state[:loop_dur] * 1.2).to_i if state[:loop_dur] < 60 * 60 * 3 # 1 hour
     state[:total_failure] = 0 unless state.has_key? :total_failure
