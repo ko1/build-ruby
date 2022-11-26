@@ -23,36 +23,6 @@ end
 
 if ARGV.empty?
 
-=begin
-# old silicon setting
-
-           # trunk-asserts-nopara 
-tests = {
-  'rubydev:bionic' =>
-        %w(trunk_gcc4 trunk_gcc5 trunk_gcc6 trunk_gcc7 trunk_gcc8
-           trunk_clang_39 trunk_clang_40 trunk_clang_50 trunk_clang_60
-           trunk_clang_7 trunk_clang_8
-           trunk-nopara
-           trunk-jemalloc
-           trunk-asserts
-           trunk-vm-asserts trunk-gc-asserts
-           trunk-theap-asserts
-           trunk-no-theap
-           trunk-mjit trunk-mjit-wait
-           trunk-no-mjit
-           trunk-iseq_binary
-           trunk-iseq_binary-nopara
-           trunk-gc_compact
-           trunk-O0
-           trunk-cross-mingw64
-        ),
-  'rubydev:focal' =>
-        %w(trunk_gcc9 trunk_gcc10
-	   trunk_clang_9 trunk_clang_10
-        ),
-}
-=end
-#
 tests = {
   'rubydev:focal' => %w{
     trunk-random0
