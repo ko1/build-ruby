@@ -290,6 +290,7 @@ class BuildRuby
   def autoconf
     Dir.chdir(@TARGET_SRC_DIR){
       unless File.exist?('configure')
+        cmd './autogen.sh' if File.exist?('./autogen.sh')
         cmd 'autoconf'
       end
     } if RUBY_PLATFORM !~ /mswin|mingw/
