@@ -9,6 +9,7 @@ require 'json'
 require 'logger'
 require 'benchmark'
 require 'fileutils'
+require 'open-uri'
 
 require_relative 'load_env'
 
@@ -82,10 +83,6 @@ def build target_name, extra_opts: ARGV,
   [result, logfile]
 end
 
-def clean_all target
-  build target, extra_opts: ['--rm=all', "--root_dir=#{WORKING_DIR}"]
-end
-
 def check_logfile logfile
   r = {
     exit_results: [],
@@ -124,7 +121,6 @@ def check_logfile logfile
   } if File.exist?(logfile)
   r
 end
-
 
 CORE_DIR = '/tmp/cores'
 CORE_COLLECT_DIR = "/tmp/collected_cores"
@@ -190,6 +186,11 @@ end
 
 UNAME_A = `uname -a`
 
+def clean_all target, state
+  build target, extra_opts: ['--rm=all', "--root_dir=#{WORKING_DIR}"]
+  state[:last_clean_time] = Time.now.to_i
+end
+
 def build_report target_name
   setup_collect_cores
 
@@ -212,6 +213,16 @@ def build_report target_name
       total_success: 0,
       total_failure: 0,
     }
+
+    state[:last_clean_time] ||= Time.now.to_i
+  end
+
+  # check allclean time
+  json = URI.open('https://simpler-alerts-bot.herokuapp.com/allclean').read
+  all_clean_time = Time.at(JSON.load(json)&.dig('allclean') || 0)
+
+  if all_clean_time > Time.at(state[:last_clean_time])
+    clean_all target_name, state
   end
 
   result, out_log, logfile = nil
@@ -269,7 +280,7 @@ def build_report target_name
     state[:total_success] = 0 unless state.has_key? :total_success
     state[:total_success] += 1
   else
-    clean_all target_name if state[:failure] >= 1 # allow 1 failure
+    clean_all target_name, state if state[:failure] >= 1 # allow 1 failure
     state[:failure]  += 1
     state[:loop_dur] = (state[:loop_dur] * 2.0).to_i if state[:loop_dur] < 60 * 60 * 3 # 1 hour
     state[:total_failure] = 0 unless state.has_key? :total_failure
