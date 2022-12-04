@@ -1,6 +1,6 @@
 
 def kick image, cmd, config_name, run_opt, noop
-  cmd = "docker run #{run_opt} --memory=4g --init --rm " +
+  cmd = "docker run #{run_opt} --memory=6g --init --rm " +
         "-v #{__dir__}/ruby:/home/ko1/ruby " + 
         "-v #{__dir__}/../:/home/ko1/build-ruby " + 
         "--name=#{config_name} --hostname=#{`hostname`.strip}-docker " +
@@ -79,7 +79,7 @@ ps = `docker ps --no-trunc`
 
 tests.each{|image, tests|
   tests.each{|test|
-    if /^(.+#{test}.+)$/ =~ ps
+    if /^(.+#{test}\s+.+)$/ =~ ps
       STDERR.puts "#{test} is already launched: #{$1}"
     else
       run image, test
