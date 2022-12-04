@@ -22,16 +22,19 @@ end
 
 if ARGV.empty?
 
+  # no memory...
+  # trunk-random0
+  # trunk-random1
+  # trunk-random2
+  # trunk-random3
+  # trunk-random-repeat
+  # trunk-jemalloc
+
 tests = {
   'rubydev:jammy' => %w{
-    trunk-random0
-    trunk-random1
-    trunk-random2
-    trunk-random3
     trunk-repeat20
     trunk-repeat20-asserts
     trunk-repeat50
-    trunk-random-repeat
 
     trunk-gc-asserts
     trunk-asserts
@@ -47,8 +50,6 @@ tests = {
     trunk_clang_12
     trunk_clang_13
     trunk_clang_14
-
-    trunk-jemalloc
 
     trunk-yjit
     trunk-yjit-asserts
