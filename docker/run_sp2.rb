@@ -23,7 +23,6 @@ end
 if ARGV.empty?
 
   # no memory...
-  # trunk-random0
   # trunk-random1
   # trunk-random2
   # trunk-random3
@@ -32,6 +31,9 @@ if ARGV.empty?
 
 tests = {
   'rubydev:jammy' => %w{
+    trunk-random0
+    trunk-random1
+
     trunk-repeat20
     trunk-repeat20-asserts
     trunk-repeat50

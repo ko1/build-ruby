@@ -3,73 +3,73 @@ trunk_gcc4:
   loop_minimum_duration: 3600
 trunk_gcc5:
   arg: --configure_opts=CC=gcc-5
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk_gcc6:
   arg: --configure_opts=CC=gcc-6
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk_gcc7:
   arg: --configure_opts=CC=gcc-7
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk_gcc8:
   arg: --configure_opts=CC=gcc-8
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk_gcc9:
   arg: --configure_opts=CC=gcc-9
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 ttrunk_gcc10:
   arg: --configure_opts=CC=gcc-10
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 ttrunk_gcc11:
   arg: --configure_opts=CC=gcc-11
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 ttrunk_gcc12:
   arg: --configure_opts=CC=gcc-12
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk_clang_38:
   arg: --configure_opts=CC=clang-3.8
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk_clang_39:
   arg: --configure_opts=CC=clang-3.9
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk_clang_40:
   arg: --configure_opts=CC=clang-4.0
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk_clang_50:
   arg: --configure_opts=CC=clang-5.0
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk_clang_60:
   arg: --configure_opts=CC=clang-6.0
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk_clang_7:
   arg: --configure_opts=CC=clang-7
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk_clang_8:
   arg: --configure_opts=CC=clang-8
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk_clang_9:
   arg: --configure_opts=CC=clang-9
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk_clang_10:
   arg: --configure_opts=CC=clang-10
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk_clang_11:
   arg: --configure_opts=CC=clang-11
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk_clang_12:
   arg: --configure_opts=CC=clang-12
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk_clang_13:
   arg: --configure_opts=CC=clang-13
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk_clang_14:
   arg: --configure_opts=CC=clang-14
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk-jemalloc:
   arg: --configure_opts='--with-jemalloc --enable-shared'
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk-O0:
   arg: --configure_opts='optflags=-O0'
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk-nopara: --no-parallel
 trunk-asserts:
   arg: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1 -fno-inline"'   --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=50
@@ -87,20 +87,20 @@ trunk-mjit-wait:
   build_timeout: 18000
 trunk-no-mjit:
   arg: --configure_opts='--disable-jit-support'
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk-theap-asserts:
   arg: --build_opts='DEFS="-DTRANSIENT_HEAP_CHECK_MODE=1 -DTRANSIENT_HEAP_DEBUG_INFINITE_BLOCK=1 -DTRANSIENT_HEAP_DEBUG_DONT_PROMOTE=-1 -DARRAY_DEBUG=1 -DHASH_DEBUG=1"'
 trunk-no-theap:
   arg: --build_opts='DEFS=-DUSE_TRANSIENT_HEAP=0'
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk-iseq_binary:
   arg: --add-env=RUBY_ISEQ_DUMP_DEBUG=to_binary
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk-iseq_binary-nopara:
   arg: --add-env=RUBY_ISEQ_DUMP_DEBUG=to_binary --no-parallel
 trunk-cross-mingw64:
   arg: --configure_opts='--host=x86_64-w64-mingw32 --with-baseruby=/home/ko1/ruby/v2/install/trunk/bin/ruby' --only-install
-  loop_minimum_duration: 3600
+  loop_minimum_duration: 7200
 trunk-gc_compact:
   arg: --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30 --add-env=RUBY_TEST_GC_COMPACT=1
 trunk-random0: --test_opts='TESTS="--test-order=random"'
