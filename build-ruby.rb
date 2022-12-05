@@ -79,7 +79,7 @@ class BuildRuby
     @svn_revision = svn_revision
     basename = File.basename(@REPOSITORY)
 
-    root_dir_prefix = ENV['BR_ROOTDIR'] || 'v3'
+    root_dir_prefix = ENV['BR_ROOTDIR'] || ''
     if !root_dir_prefix.empty?
       root_dir = File.join(root_dir, root_dir_prefix)
     end
