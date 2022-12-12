@@ -126,7 +126,7 @@ trunk-random-repeat:
 trunk-pthread-coroutine:
   arg: --configure_opts=--with-coroutine=pthread
 trunk-yjit:
-  arg: --configure_opts=cppflags=-DYJIT_FORCE_ENABLE --no-parallel
+  arg: --configure_opts=cppflags=-DYJIT_FORCE_ENABLE
 trunk-yjit-asserts:
-  arg: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1"' --configure_opts=cppflags=-DYJIT_FORCE_ENABLE --no-parallel
+  arg: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1"' --configure_opts=cppflags=-DYJIT_FORCE_ENABLE
   build_timeout: 208000
