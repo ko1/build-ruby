@@ -1,10 +1,11 @@
-
 def kick image, cmd, config_name, run_opt, noop
   cmd = "docker run #{run_opt} --memory=6g --init --rm " +
+        # "--tmpfs /tmp:exec " +
         "-v #{__dir__}/ruby:/home/ko1/ruby " + 
         "-v #{__dir__}/../:/home/ko1/build-ruby " + 
+        # "-v /tmp:/tmp " +
         "--name=#{config_name} --hostname=#{`hostname`.strip}-docker " +
-        "--cap-add=SYS_PTRACE --tmpfs /tmp:exec " +
+        "--cap-add=SYS_PTRACE " +
         "-e BUILD_RUBY_WORKING_DIR=/tmp/ruby " +
         "#{image} #{cmd}"
   puts "kick: #{cmd}"
@@ -23,16 +24,14 @@ end
 if ARGV.empty?
 
   # no memory...
-  # trunk-random1
-  # trunk-random2
   # trunk-random3
   # trunk-random-repeat
-  # trunk-jemalloc
 
 tests = {
   'rubydev:jammy' => %w{
     trunk-random0
     trunk-random1
+    trunk-random2
 
     trunk-repeat20
     trunk-repeat20-asserts
@@ -43,6 +42,7 @@ tests = {
     trunk-iseq_binary
     trunk-no-mjit
     trunk-O0
+    trunk-jemalloc
 
     trunk_gcc9
     trunk_gcc10
