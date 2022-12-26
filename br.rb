@@ -184,7 +184,11 @@ def collect_cores logfile
   end
 end
 
-UNAME_A = `uname -a`
+begin
+  UNAME_A = `uname -a`
+rescue
+  UNAME_A = Etc.uname.values.join(' ')
+end
 
 def clean_all target, state
   build target, extra_opts: ['--rm=all', "--root_dir=#{WORKING_DIR}"]
