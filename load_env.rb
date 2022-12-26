@@ -5,6 +5,8 @@ else
   ENV['RUBY_DEBUG'] = 'ci'
 end
 
+ENV['NO_COLOR'] = '1'
+
 CONFIG_DIR  = File.expand_path(ENV['BUILD_RUBY_CONFIG_DIR']  || "~/ruby")
 WORKING_DIR = File.expand_path(ENV['BUILD_RUBY_WORKING_DIR'] || "~/ruby")
 
