@@ -79,7 +79,7 @@ trunk-gc-asserts:
   arg: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2"'                              --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
   build_timeout: 21600
 trunk-vm-asserts:     --build_opts='DEFS="-DVM_CHECK_MODE=2"'
-master-mjit:
+trunk-mjit:
   arg: --configure_opts=cppflags="-DMJIT_FORCE_ENABLE" --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
   build_timeout: 10800
 trunk-no-mjit:
