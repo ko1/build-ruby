@@ -1,6 +1,8 @@
 docker/.gist
 docker/.gitconfig
 docker/ruby/logs
+docker/ruby/state.yaml
+docker/tmp/
 result_srv/logfiles
 default_targets.rb
 result_srv/.bundle/
