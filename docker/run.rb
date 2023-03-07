@@ -40,9 +40,8 @@ tests = {
     trunk-no-mjit
     trunk-yjit
     trunk-O0
+    master-mjit
   },
-  # trunk-mjit
-  # trunk-mjit-wait
 }
 
 # clean
