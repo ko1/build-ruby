@@ -55,6 +55,7 @@ tests = {
 
     trunk-yjit
     trunk-yjit-asserts
+    master-mjit
   },
 }
 
