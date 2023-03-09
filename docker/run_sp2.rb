@@ -40,7 +40,6 @@ tests = {
     trunk-gc-asserts
     trunk-asserts
     trunk-iseq_binary
-    trunk-no-mjit
     trunk-O0
     trunk-jemalloc
 
@@ -55,8 +54,10 @@ tests = {
 
     trunk-yjit
     trunk-yjit-asserts
+
+    master-rjit
+    master-no-rjit
   },
-  # trunk-mjit
 }
 
 # clean
