@@ -79,14 +79,11 @@ trunk-gc-asserts:
   arg: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2"'                              --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
   build_timeout: 21600
 trunk-vm-asserts:     --build_opts='DEFS="-DVM_CHECK_MODE=2"'
-trunk-mjit:
-  arg: --configure_opts=cppflags="-DMJIT_FORCE_ENABLE" --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30 --test_opts='RUN_OPTS="--disable-gems --mjit-debug=-ggdb3"'
+master-rjit:
+  arg: --configure_opts=cppflags="-DRJIT_FORCE_ENABLE" --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
   build_timeout: 10800
-trunk-mjit-wait:
-  arg: --configure_opts=cppflags="-DMJIT_FORCE_ENABLE" --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30 --test_opts='RUN_OPTS="--disable-gems --mjit-debug=-ggdb3 --mjit-wait --mjit-warnings --mjit-min-calls=5"'
-  build_timeout: 18000
-trunk-no-mjit:
-  arg: --configure_opts='--disable-jit-support'
+master-no-rjit:
+  arg: --configure_opts='--disable-rjit'
   loop_minimum_duration: 7200
 trunk-theap-asserts:
   arg: --build_opts='DEFS="-DTRANSIENT_HEAP_CHECK_MODE=1 -DTRANSIENT_HEAP_DEBUG_INFINITE_BLOCK=1 -DTRANSIENT_HEAP_DEBUG_DONT_PROMOTE=-1 -DARRAY_DEBUG=1 -DHASH_DEBUG=1"'
