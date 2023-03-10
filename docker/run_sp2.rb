@@ -55,9 +55,9 @@ tests = {
     trunk-yjit
     trunk-yjit-asserts
 
-    master-rjit
     master-no-rjit
   },
+  # master-rjit
 }
 
 # clean
