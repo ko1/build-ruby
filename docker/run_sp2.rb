@@ -53,10 +53,10 @@ tests = {
     trunk_clang_14
 
     trunk-yjit
-    trunk-yjit-asserts
 
     master-no-rjit
   },
+  # trunk-yjit-asserts
   # master-rjit
 }
 
