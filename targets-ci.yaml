@@ -73,11 +73,11 @@ trunk-O0:
 trunk-nopara: --no-parallel
 trunk-asserts:
   arg: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1 -fno-inline"'   --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=50
-  build_timeout: 21600
+  build_timeout: 32400
 trunk-asserts-nopara: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1"' --no-parallel --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
 trunk-gc-asserts:
   arg: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2"'                              --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
-  build_timeout: 21600
+  build_timeout: 32400
 trunk-vm-asserts:     --build_opts='DEFS="-DVM_CHECK_MODE=2"'
 master-rjit:
   arg: --configure_opts=cppflags="-DRJIT_FORCE_ENABLE" --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
