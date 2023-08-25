@@ -20,7 +20,7 @@ ruby build-ruby.rb [options...] [REPOSITORY] [TARGET_NAME]
 ## Updating targets-ci.yaml
 ```
 $ sudo su ko1
-$ cd ~/ruby/build-ruby
+$ cd ~/build-ruby
 $ git pull
 ```
 
@@ -30,7 +30,7 @@ You don't need to restart containers to reflect the changes.
 
 ```
 $ sudo su ko1
-$ cd ~/ruby/build-ruby/docker
+$ cd ~/build-ruby/docker
 $ ruby run_sp2.rb
 ```
 
