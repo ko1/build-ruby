@@ -1,0 +1,28 @@
+<%= style %>
+<%= banner %>
+
+<h1>Search in CI result</h1>
+<form method='post'>
+  Text: <input type='textarea' name='text' value='<%= text %>' /><br />
+  Days: <input type='textarea' name='days' value='<%= days %>' />
+  <% if dur %>
+    (<%= dur.begin %> ~ <%= dur.end %>)
+  <% end %><br />
+  <input type='submit' />
+</form>
+
+<% if results %>
+<table>
+  <% results.each{|result| %>
+    <tr class=<%= (result.success? ? 'success_result' : 'failed_result').dump %>>
+      <td><%= link_to_name_of result %></td>
+      <td><%= link_to result %></td>
+      <td class='<%= result.success? ? 'success' : 'failed' %>_line'><%=h result.result %> </td>
+      <td><%= link_to_rev_of result %></td>
+      <td><%= link_to_log_of result %></td>
+      <td><%= link_to_core_of result %></td>
+      <td><%= result.pretty_elapsed_time %></td>
+    </tr>
+  <% } %>
+</table>
+<% end %>

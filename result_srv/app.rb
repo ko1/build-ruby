@@ -150,6 +150,27 @@ class ResultServer < Sinatra::Base
     end
   end
 
+  get '/search' do
+    erb :search, locals: {results: nil, text: '', days: 30, dur: nil}
+  end
+
+  post '/search' do
+    text = params['text']
+    days = params['days']
+    days = days.to_i
+    dur  = (Time.at(Time.now - 24 * 60 * 60 * days) .. Time.now)
+    limit = (params['limit'] || 100).to_i
+
+    results = Result
+      .where('updated_at > ? and updated_at <= ?', dur.begin, dur.end)
+      .where('result NOT LIKE ?', "OK%")
+      .where('desc_json LIKE ?', "%#{text}%")
+      .order(updated_at: :desc)
+      .limit(limit)
+
+    erb :search, locals: {results: results, text: text, days: days, dur: dur}
+  end
+
   def par v
     params[v.to_s]
   end
