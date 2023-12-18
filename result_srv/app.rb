@@ -369,6 +369,18 @@ class ResultServer < Sinatra::Base
       "<a href='?start=#{ta}&d=#{days}'>prev #{days} #{days_str}</a>, " \
       "<a href='?start=#{tb+(60*60*24*days)}&d=#{days}'>next #{days} #{days_str}</a>"
     end
+
+    def snippet_lines result, text
+      r = []
+      if result.desc_json && desc = JSON.parse(result.desc_json, symbolize_names: true)
+        desc[:exit_results].each{|lineno, line|
+          if line.match text
+            r << [lineno, line.chomp]
+          end
+        }
+      end
+      r
+    end
   end
 end
 

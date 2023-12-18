@@ -22,6 +22,10 @@
       <td><%= link_to_log_of result %></td>
       <td><%= link_to_core_of result %></td>
       <td><%= result.pretty_elapsed_time %></td>
+      <td><pre><table><% snippet_lines(result, text).each do |lineno, line| %>
+                        <%= exit_results_line result.detail_link, lineno, line %>
+                      <% end %></table></pre>
+      </td>
     </tr>
   <% } %>
 </table>
