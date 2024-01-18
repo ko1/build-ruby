@@ -120,7 +120,7 @@ class BuildRuby
       build_opts ||= "-j#{process_num}"
       btest_opts ||= "-j#{process_num}"
       test_opts  ||= "TESTS='-j#{process_num}'"
-      spec_opts  ||= "-j#{process_num}"
+      spec_opts  ||= "-j" # it doesn't accept numbers
     end
     @configure_opts = configure_opts || ['--enable-shared']
     @build_opts = build_opts
