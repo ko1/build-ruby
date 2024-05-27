@@ -1,7 +1,9 @@
 
 # modify hosts
-hosts=File.readlines("/etc/hosts").reject{|line|/::/=~line}
-File.write("/etc/hosts", hosts.join)
+if false # on jammy rubyspec fails with it
+  hosts=File.readlines("/etc/hosts").reject{|line|/::/=~line}
+  File.write("/etc/hosts", hosts.join)
+end
 
 # exec
 test_opts = ARGV.join(" ")
