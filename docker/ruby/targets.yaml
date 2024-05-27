@@ -72,9 +72,11 @@ trunk-O0:
   loop_minimum_duration: 7200
 trunk-nopara: --no-parallel
 trunk-asserts:
-  arg: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1 -fno-inline"'   --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=50
+  arg: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1 -fno-inline"'               --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=50
   build_timeout: 21600
-trunk-asserts-nopara: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1"' --no-parallel --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
+trunk-asserts-nopara:
+  arg: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1 -fno-inline"' --no-parallel --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=50
+  build_timeout: 316000
 trunk-gc-asserts:
   arg: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2"'                              --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
   build_timeout: 21600

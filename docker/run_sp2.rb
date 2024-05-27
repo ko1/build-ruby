@@ -38,7 +38,7 @@ tests = {
     trunk-repeat50
 
     trunk-gc-asserts
-    trunk-asserts
+    trunk-asserts-nopara
     trunk-iseq_binary
     trunk-O0
     trunk-jemalloc

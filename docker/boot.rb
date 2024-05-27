@@ -1,7 +1,8 @@
 
-# modify hosts
-hosts=File.readlines("/etc/hosts").reject{|line|/::/=~line}
-File.write("/etc/hosts", hosts.join)
+# now it introduces failures
+  # modify hosts
+  # hosts=File.readlines("/etc/hosts").reject{|line|/::/=~line}
+  # File.write("/etc/hosts", hosts.join)
 
 # exec
 test_opts = ARGV.join(" ")
