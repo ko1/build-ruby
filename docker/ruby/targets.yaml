@@ -72,17 +72,17 @@ trunk-O0:
   loop_minimum_duration: 7200
 trunk-nopara: --no-parallel
 trunk-asserts:
-  arg: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1 -fno-inline"'               --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=50
+  arg: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1 -fno-inline"'               --add-env=RUBY_TEST_TIMEOUT_SCALE=50
   build_timeout: 21600
 trunk-asserts-nopara:
-  arg: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1 -fno-inline"' --no-parallel --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=50
+  arg: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2 -DRUBY_DEBUG=1 -fno-inline"' --no-parallel --add-env=RUBY_TEST_TIMEOUT_SCALE=50
   build_timeout: 316000
 trunk-gc-asserts:
-  arg: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2"'                              --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
+  arg: --build_opts='DEFS="-DRGENGC_CHECK_MODE=2"'                                          --add-env=RUBY_TEST_TIMEOUT_SCALE=50
   build_timeout: 21600
 trunk-vm-asserts:     --build_opts='DEFS="-DVM_CHECK_MODE=2"'
 master-rjit:
-  arg: --configure_opts=cppflags="-DRJIT_FORCE_ENABLE" --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30
+  arg: --configure_opts=cppflags="-DRJIT_FORCE_ENABLE"                                      --add-env=RUBY_TEST_TIMEOUT_SCALE=30
   build_timeout: 10800
 master-no-rjit:
   arg: --configure_opts='--disable-rjit'
@@ -101,7 +101,7 @@ trunk-cross-mingw64:
   arg: --configure_opts='--host=x86_64-w64-mingw32 --with-baseruby=/home/ko1/ruby/v2/install/trunk/bin/ruby' --only-install
   loop_minimum_duration: 7200
 trunk-gc_compact:
-  arg: --add-env=RUBY_TEST_SUBPROCESS_TIMEOUT_SCALE=30 --add-env=RUBY_TEST_GC_COMPACT=1
+  arg: --add-env=RUBY_TEST_TIMEOUT_SCALE=30 --add-env=RUBY_TEST_GC_COMPACT=1
 trunk-random0: --test_opts='TESTS="--test-order=random"'
 trunk-random1: --test_opts='TESTS="--test-order=random"'
 trunk-random2: --test_opts='TESTS="--test-order=random"'
