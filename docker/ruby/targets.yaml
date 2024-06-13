@@ -16,14 +16,20 @@ trunk_gcc8:
 trunk_gcc9:
   arg: --configure_opts=CC=gcc-9
   loop_minimum_duration: 7200
-ttrunk_gcc10:
+trunk_gcc10:
   arg: --configure_opts=CC=gcc-10
   loop_minimum_duration: 7200
-ttrunk_gcc11:
+trunk_gcc11:
   arg: --configure_opts=CC=gcc-11
   loop_minimum_duration: 7200
-ttrunk_gcc12:
+trunk_gcc12:
   arg: --configure_opts=CC=gcc-12
+  loop_minimum_duration: 7200
+trunk_gcc13:
+  arg: --configure_opts=CC=gcc-13
+  loop_minimum_duration: 7200
+trunk_gcc14:
+  arg: --configure_opts=CC=gcc-14
   loop_minimum_duration: 7200
 trunk_clang_38:
   arg: --configure_opts=CC=clang-3.8
@@ -63,6 +69,18 @@ trunk_clang_13:
   loop_minimum_duration: 7200
 trunk_clang_14:
   arg: --configure_opts=CC=clang-14
+  loop_minimum_duration: 7200
+trunk_clang_15:
+  arg: --configure_opts=CC=clang-15
+  loop_minimum_duration: 7200
+trunk_clang_16:
+  arg: --configure_opts=CC=clang-16
+  loop_minimum_duration: 7200
+trunk_clang_17:
+  arg: --configure_opts=CC=clang-17
+  loop_minimum_duration: 7200
+trunk_clang_18:
+  arg: --configure_opts=CC=clang-18
   loop_minimum_duration: 7200
 trunk-jemalloc:
   arg: --configure_opts='--with-jemalloc --enable-shared'
