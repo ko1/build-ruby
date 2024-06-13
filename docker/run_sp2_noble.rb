@@ -1,13 +1,13 @@
 IMAGE = 'rubydev:noble'
 
 def kick image, cmd, config_name, run_opt, noop
-  uver = image.scan(/.+:(.+)/).first || image
+  uver = image.scan(/.+:(.+)/)&.first&.first || image
 
   cmd = "docker run #{run_opt} --memory=6g --init --rm " +
         # "--tmpfs /tmp:exec " +
         "-v #{__dir__}/ruby:/home/ko1/ruby " + 
         "-v #{__dir__}/../:/home/ko1/build-ruby " +
-        "-v /var/run/docker.sock:/var/run/docker.sock" +
+        "-v /var/run/docker.sock:/var/run/docker.sock " +
         # "-v /tmp:/tmp " +
         "--name=#{config_name} --hostname=#{`hostname`.strip}-#{uver}-docker " +
         "--cap-add=SYS_PTRACE " +
