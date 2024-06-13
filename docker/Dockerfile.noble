@@ -27,7 +27,7 @@ RUN \
   apt-get install -y libreadline-dev libgdbm-dev libyaml-dev && \
   apt-get install -y vim-tiny gdb valgrind tzdata libjemalloc-dev && \
   apt-get install -y ruby autoconf bison make && \
-  apt-get install -y lv screen dash git sudo ccache && \
+  apt-get install -y lv screen dash git sudo ccache curl && \
   curl -fsSL https://get.docker.com -o get-docker.sh && \
   sh get-docker.sh && \
   rm -rf /var/lib/apt/lists/*

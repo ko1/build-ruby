@@ -1,10 +1,15 @@
+IMAGE = 'rubydev:noble'
+
 def kick image, cmd, config_name, run_opt, noop
+  uver = image.scan(/.+:(.+)/).first || image
+
   cmd = "docker run #{run_opt} --memory=6g --init --rm " +
         # "--tmpfs /tmp:exec " +
         "-v #{__dir__}/ruby:/home/ko1/ruby " + 
-        "-v #{__dir__}/../:/home/ko1/build-ruby " + 
+        "-v #{__dir__}/../:/home/ko1/build-ruby " +
+        "-v /var/run/docker.sock:/var/run/docker.sock" +
         # "-v /tmp:/tmp " +
-        "--name=#{config_name} --hostname=#{`hostname`.strip}-docker " +
+        "--name=#{config_name} --hostname=#{`hostname`.strip}-#{uver}-docker " +
         "--cap-add=SYS_PTRACE " +
         "-e BUILD_RUBY_WORKING_DIR=/tmp/ruby " +
         "#{image} #{cmd}"
@@ -17,7 +22,7 @@ def run image, config_name, noop = false
 end
 
 def run_interractive arg, noop = false
-  image = 'rubydev:jammy'
+  image = 'rubydev:noble'
   kick image, arg, "run_interractive.#{$$}", '-it', noop
 end
 
@@ -28,7 +33,7 @@ if ARGV.empty?
   # trunk-random-repeat
 
 tests = {
-  'rubydev:jammy' => %w{
+  IMAGE => %w{
     trunk-random0
     trunk-random1
     trunk-random2
