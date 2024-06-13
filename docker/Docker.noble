@@ -1,0 +1,34 @@
+FROM ubuntu:noble
+MAINTAINER Koichi Sasada
+
+RUN sed -ie 's/= 1$/= 0/g' /etc/sysctl.d/10-ptrace.conf
+
+# add user
+RUN mkdir /home/tester && \
+    groupadd -g 1000 dev && \
+    useradd -g dev -G sudo -s /bin/bash tester && \
+    echo 'tester:tester' | chpasswd && \
+    chown tester /home/tester
+
+RUN mkdir /home/ko1 && \
+    useradd -g dev -G sudo -s /bin/bash -u 1001 ko1 && \
+    echo 'ko1:ko1' | chpasswd && \
+    chown ko1 /home/ko1
+
+RUN \
+  apt-get update && \
+  apt-get install -y apt-utils && \
+  apt-get dist-upgrade -y && \ 
+  apt-get install -y gcc gcc-10 gcc-11 gcc-12 gcc-13 gcc-14 && \
+  apt-get install -y gcc-mingw-w64 && \
+  apt-get install -y clang clang-14 clang-15 clang-16 clang-17 clang-18 &&
+  apt-get install -y rustc && \
+  apt-get install -y libgmp-dev libssl-dev zlib1g-dev libffi-dev libreadline-dev libgdbm-dev libyaml-dev &&
+  apt-get install -y vim-tiny gdb valgrind tzdata libjemalloc-dev && \
+  apt-get install -y ruby autoconf bison make && \
+  apt-get install -y lv screen dash git sudo ccache && \
+  rm -rf /var/lib/apt/lists/*
+
+# memo: https://qiita.com/yagince/items/deba267f789604643bab
+#       why git is at the last. 
+
