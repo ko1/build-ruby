@@ -386,7 +386,7 @@ class BuildRuby
 
   def test_rubyspec
     builddir{
-      cmd "#{@make} yes-test-rubyspec MSPECOPT='--error-output stderr --debug #{@spec_opts}' #{@test_opts}", on_failure: :skip
+      cmd "#{@make} yes-test-rubyspec MSPECOPT='--error-output stderr #{@spec_opts}' #{@test_opts}", on_failure: :skip
     }
   end
 
