@@ -4,14 +4,9 @@ MAINTAINER Koichi Sasada
 RUN sed -ie 's/= 1$/= 0/g' /etc/sysctl.d/10-ptrace.conf
 
 # add user
-RUN mkdir /home/tester && \
-    groupadd -g 1001 dev && \
-    useradd -g dev -G sudo -s /bin/bash tester && \
-    echo 'tester:tester' | chpasswd && \
-    chown tester /home/tester
 
 RUN mkdir /home/ko1 && \
-    useradd -g dev -G sudo -s /bin/bash -u 1002 ko1 && \
+    useradd -g 1000 -G sudo -s /bin/bash -u 1001 ko1 && \
     echo 'ko1:ko1' | chpasswd && \
     chown ko1 /home/ko1
 
