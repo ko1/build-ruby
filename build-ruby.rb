@@ -224,6 +224,13 @@ class BuildRuby
           require_relative 'psj'
           kill_descendant_with_gdb_info @logger
 
+          out_in.read_nonblock(1024 * 100).each_line{|line|
+            @logger.error "[remained stdout] #{line.chomp}"
+          }
+          err_in.read_nonblock(1024 * 100).each_line{|line|
+            @logger.error "[remained stderr] #{line.chomp}"
+          }
+
           if @no_timeout_error
             `true` # dummy command for $?
           else

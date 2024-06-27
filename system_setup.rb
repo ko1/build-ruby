@@ -6,7 +6,7 @@ open("/etc/sysctl.d/99-ci_rvm_setup.conf", 'w') do |f|
   # Setup for ci.rvm.jp
   #
   
-  kernel.yama.ptrace_scope = 1
+  kernel.yama.ptrace_scope = 0
   kernel.core_pattern = #{core_pattern}
   EOC
 end
