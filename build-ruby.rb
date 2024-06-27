@@ -68,7 +68,8 @@ class BuildRuby
                  quiet: false,
                  gist: false,
                  date: nil,
-                 timeout: nil
+                 timeout: nil,
+                 no_timeout_error: nil
     #
     @REPOSITORY      = repository      || 'https://github.com/ruby/ruby.git'
     # svn: 'https://svn.ruby-lang.org/repos/ruby/trunk'
@@ -140,6 +141,7 @@ class BuildRuby
     @quiet = quiet
     @gist = gist
     @timeout = timeout
+    @no_timeout_error = no_timeout_error
 
     logfile ||= "log.build-ruby.#{@TARGET_NAME}.#{Time.now.strftime('%Y%m%d-%H%M%S')}"
 
@@ -221,7 +223,12 @@ class BuildRuby
           @logger.error ""
           require_relative 'psj'
           kill_descendant_with_gdb_info @logger
-          raise
+
+          if @no_timeout_error
+            `true` # dummy command for $?
+          else
+            raise
+          end
         end
       else
         [out_th, err_th].each(&:join)
@@ -597,6 +604,9 @@ opt.on('--gist'){
 }
 opt.on('--timeout=[TIMEOUT]'){|timeout|
   opts[:timeout] = timeout.to_i
+}
+opt.on('--no-timeout-error'){
+  opts[:no_timeout_error] = true
 }
 target_name = nil
 opt.on('--target_name=[TARGET_NAME]'){|t|
