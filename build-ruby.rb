@@ -204,6 +204,7 @@ class BuildRuby
   def cmd *args, on_failure: :raise
     cmd_str = args.join(' ')
     @logger.info "$$$[beg] #{cmd_str}"
+    timeout_and_no_error = false
 
     err_in, err_out = IO.pipe
     IO.popen(cmd_str, 'r+', err: err_out) do |out_in|
@@ -225,7 +226,7 @@ class BuildRuby
           kill_descendant_with_gdb_info @logger
 
           if @no_timeout_error
-            `true` # dummy command for $?
+            timeout_and_no_error = true
           else
             raise
           end
@@ -246,7 +247,9 @@ class BuildRuby
       when :raise
         raise CmdFailure, exit_str
       when :skip
-        @failures << exit_str
+        if !timeout_and_no_error
+          @failures << exit_str
+        end
       when :ignore
         # ignore
       else
