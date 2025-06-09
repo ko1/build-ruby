@@ -5,6 +5,8 @@ if false # on jammy rubyspec fails with it
   File.write("/etc/hosts", hosts.join)
 end
 
+File.write('/proc/sys/kernel/yama/ptrace_scope', '0')
+
 # exec
 test_opts = ARGV.join(" ")
 t = Thread.new{

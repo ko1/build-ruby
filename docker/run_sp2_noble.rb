@@ -10,7 +10,7 @@ def kick image, cmd, config_name, run_opt, noop
         "-v /var/run/docker.sock:/var/run/docker.sock " +
         # "-v /tmp:/tmp " +
         "--name=#{config_name} --hostname=#{`hostname`.strip}-#{uver}-docker " +
-        "--cap-add=SYS_PTRACE " +
+        "--cap-add=SYS_PTRACE --privileged " +
         "-e BUILD_RUBY_WORKING_DIR=/tmp/ruby " +
         "#{image} #{cmd}"
   puts "kick: #{cmd}"
