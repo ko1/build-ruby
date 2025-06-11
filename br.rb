@@ -205,7 +205,7 @@ def build_report target_name
     report_port = $2.to_i
   else
     report_host = target.report_host
-    report_port = 80
+    report_port = 443
   end
 
   state_db = YAML::Store.new(File.join(CONFIG_DIR, 'state.yaml'))
@@ -267,7 +267,9 @@ def build_report target_name
       data = h.map{|k, v| [k.to_s, (v.respond_to?(:read) ? v : v.to_s)] if v}.compact
       req = Net::HTTP::Put.new('/results')
       req.set_form(data, 'multipart/form-data')
-      Net::HTTP.new(report_host, report_port).start do |http|
+      http_session = Net::HTTP.new(report_host, report_port)
+      http_session.use_ssl = true
+      http_session.start do |http|
         p http.request(req)
       end
     end
