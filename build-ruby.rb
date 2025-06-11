@@ -49,6 +49,7 @@ class BuildRuby
                  repository: nil,
                  repository_type: nil,
                  git_branch: nil,
+                 git_tag: nil,
                  git_worktree: nil,
                  svn_revision: nil,
                  root_dir: "~/ruby",
@@ -76,6 +77,7 @@ class BuildRuby
     @REPOSITORY_TYPE = (repository_type || find_repository_type(@REPOSITORY)).to_sym
 
     @git_branch = git_branch
+    @git_tag = git_tag
     @git_worktree = git_worktree
     @svn_revision = svn_revision
     basename = File.basename(@REPOSITORY)
@@ -93,6 +95,8 @@ class BuildRuby
                    case
                    when @git_branch
                      "#{basename}_#{@git_branch}"
+                   when @git_tag
+                     "#{basename}_#{@git_tag}"
                    when @svn_revision
                      "#{basename}_r#{@svn_revision}"
                    else
@@ -289,9 +293,12 @@ class BuildRuby
             end
           end
         when @git_worktree
+          cmd 'git', '-C', @git_worktree, 'pull', '--rebase', 'origin', 'master' # update src first
+          cmd 'git', '-C', @git_worktree, 'worktree', 'prune'
           cmd 'git', '-C', @git_worktree, 'worktree', 'add', File.join(@SRC_DIR, @TARGET_NAME), @git_branch
-        when @git_branch
-          cmd 'git', 'clone', '--depth', '1', '-b', @git_branch, '--single-branch', @REPOSITORY, @TARGET_NAME
+          cmd 'git', 'branch', "--set-upstream-to=#{@git_branch || 'origin/master'}"
+        when @git_branch || @git_tag
+          cmd 'git', 'clone', '--depth', '1', '-b', (@git_branch || @git_tag), '--single-branch', @REPOSITORY, @TARGET_NAME
         else
           cmd 'git', 'clone', '--depth', '1', @REPOSITORY, @TARGET_NAME
         end
@@ -524,6 +531,9 @@ opt.on('--repository_type=[TYPE]'){|type|
 }
 opt.on('-b [BRANCH_NAME]', '--branch [BRANCH_NAME]', '--git_branch [BRANCH_NAME]'){|b|
   opts[:git_branch] = b
+}
+opt.on('--git_tag [TAG_NAME]'){|tag|
+  opt[:git_tag] = tag
 }
 opt.on('--git-worktree=[REPOSITORY]'){|rep|
   opts[:git_worktree] = rep
